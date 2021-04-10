@@ -11,33 +11,21 @@ The implementation is based on the working draft of the proposed [RISC-V V vecto
 If you use this software or a modified version of it for your research, please cite the paper:
 Cristóbal Ramirez, César Hernandez, Oscar Palomar, Osman Unsal, Marco Ramírez, and Adrián Cristal. 2020. A RISC-V Simulator and Benchmark Suite for Designing and Evaluating Vector Architectures. ACM Trans. Archit. Code Optim. 17, 4, Article 38 (October 2020), 29 pages. https://doi.org/10.1145/3422667
 
+## Vectorized apps
 
+| Application Name  | Application Domain            | Algorithmic Model     | Taken From  |
+| ----------------- |------------------------------ | --------------------- | ----------- |
+| Axpy              | High Performance Computing    | BLAS                  | -           |
+| Blackscholes      | Financial Analysis            | Dense Linear Algebra  | PARSEC      |
+| Canneal           | Engineering                   | Unstructured Grids    | PARSEC      |
+| LavaMD2           | Molecular Dynamics            | N-Body                | Rodinia     |
+| Particle Filter   | Medical Imaging               | Structured Grids      | Rodinia     |
+| Somier            | Physics Simulation            | Dense Linear Algebra  | -           |
+| Jacobi-2D         | Engineering                   | Dense Linear Algebra  | PolyBench   |
+| Pathfinder        | Grid Traversal                | Dynamic Programming   | Rodinia     |
+| Streamcluster     | Data Mining                   | Dense Linear Algebra  | PARSEC      |
+| Swaptions         | Financial Analysis            | MapReduce Regular     | PARSEC      |
 
-## Pakage Structure
-
-    Vectorized_Benchmark_Suite/ : The Vectorized Benchmark Suite
-        _axpy/                  : axpy main folder
-        ...../src               : axpy sources
-        ...../bin               : axpy binary
-        blackscholes/           : Blackscholes main folder
-        ...../src               : Blackscholes sources
-        ...../bin               : Blackscholes binary
-        canneal/                : canneal main folder
-        ...../src               : canneal sources
-        ...../bin               : canneal binary
-        particlefilter/         : particlefilter main folder
-        ...../src               : particlefilter sources
-        ...../bin               : particlefilter binary
-        pathfinder/             : pathfinder main folder
-        ...../src               : pathfinder sources
-        ...../bin               : pathfinder binary
-        streamcluster/          : streamcluster main folder
-        ...../src               : streamcluster sources
-        ...../bin               : streamcluster binary
-        swaptions/              : swaptions main folder
-        ...../src               : swaptions sources
-        ...../bin               : swaptions binary
-        common/                 : intrinsics defines & Math functions
 
 ## Building Vectorized Applications 
 

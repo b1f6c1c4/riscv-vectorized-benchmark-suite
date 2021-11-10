@@ -1,0 +1,55 @@
+rule cxx cc ld |= (../tools/build.sh)
+rule cxx |= (../tools/build.sh) (../../llvm/upstream-build/bin/clang)
+rule cc |= (../tools/build.sh) (../../llvm/upstream-build/bin/clang++)
+> rule cxx
+>     command = ../tools/riscv64-{genre}-linux-gnu-c++ -O2 $cflags -c $in -o $out
+>     description = riscv64-{genre}-linux-gnu-c++ $out
+> rule cc
+>     command = ../tools/riscv64-{genre}-linux-gnu-cc -O2 $cflags -c $in -o $out
+>     description = riscv64-{genre}-linux-gnu-cc $out
+> rule ld
+>     command = ../tools/riscv64-{genre}-linux-gnu-ld $ldflags $in -lm -o $out
+>     description = riscv64-{genre}-linux-gnu-ld $out
+> rule dump
+>     command = ../tools/dump $in >$out
+>     description = dump
+
+include file := ../../spike/spike.tmpl.ajnin
+
+list d ::=
+    += axpy
+    += blackscholes
+    += canneal
+    += jacobi-2d
+    += particlefilter
+    += pathfinder
+    += streamcluster
+    += swaptions
+
+list s ::=
+    += serial rvv
+    += vector rvv -DUSE_RISCV_VECTOR
+
+rule cxx cc &cflags+=' -w '
+
+foreach d {
+    foreach s {
+        rule cxx cc ld &genre=$s0
+        (_$d/bin/$d_$s.exe) --dump-- (_$d/bin/$d_$s.dump) also[>> (compile) !] >> ($d)
+        (_$d/bin/$d_$s.exe) --spike-- (_$d/bin/$d_$s.report) >> ($d) >> (all)
+        foreach list f := _$d/src/$$.cpp {
+            (_$d/src/$f.cpp)
+                --cxx&cflags+=$s1-- (_$d/bin/$f_$s.o)
+                --ld-- (_$d/bin/$d_$s.exe)
+        }
+        clear list f
+        foreach list f := _$d/src/$$.c {
+            (_$d/src/$f.c)
+                --cc&cflags+=$s1-- (_$d/bin/$f_$s.o)
+                --ld-- (_$d/bin/$d_$s.exe)
+        }
+        clear list f
+    }
+}
+
+$> default all

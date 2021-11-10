@@ -1,0 +1,15 @@
+axpy \
+256
+blackscholes \
+1 ../input/in_1024.input prices.txt
+canneal \
+1 100 300 input/100.nets 8
+jacobi-2d
+particlefilter \
+-x 128 -y 128 -z 2 -np 256
+pathfinder \
+32 32 out
+streamcluster \
+3 10 128 128 128 10 none output.txt 1
+swaptions \
+-ns 8 -sm 512 -nt 1

@@ -15,16 +15,7 @@ rule cc |= (../tools/build.sh) (../../llvm/upstream-build/bin/clang++)
 >     description = dump
 
 include file := ../../spike/spike.tmpl.ajnin
-
-list d ::=
-    += axpy
-    += blackscholes
-    += canneal
-    += jacobi-2d
-    += particlefilter
-    += pathfinder
-    += streamcluster
-    += swaptions
+include list d := tests.txt
 
 list s ::=
     += serial rvv
@@ -36,7 +27,7 @@ foreach d {
     foreach s {
         rule cxx cc ld &genre=$s0
         (_$d/bin/$d_$s.exe) --dump-- (_$d/bin/$d_$s.dump) also[>> (compile) !] >> ($d)
-        (_$d/bin/$d_$s.exe) --spike-- (_$d/bin/$d_$s.report) >> ($d) >> (all)
+        (_$d/bin/$d_$s.exe) --spike&workdir="_$d/bin/"&args=$d0-- (_$d/bin/$d_$s.report) >> ($d) >> (all)
         foreach list f := _$d/src/$$.cpp {
             (_$d/src/$f.cpp)
                 --cxx&cflags+=$s1-- (_$d/bin/$f_$s.o)

@@ -4,7 +4,7 @@ blackscholes \
 1 ../input/in_1024.input prices.txt
 jacobi-2d
 particlefilter \
--x 128 -y 128 -z 2 -np 256
+-x 64 -y 64 -z 2 -np 256
 pathfinder \
 32 32 out
 streamcluster \

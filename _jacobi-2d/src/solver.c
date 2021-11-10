@@ -1,5 +1,3 @@
-#include "heat.h"
-
 #define min(a,b) ( ((a) < (b)) ? (a) : (b) )
 
 #ifdef USE_RISCV_VECTOR

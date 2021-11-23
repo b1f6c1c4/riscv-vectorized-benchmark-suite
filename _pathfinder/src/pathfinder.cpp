@@ -22,7 +22,7 @@ using namespace std;
 #define MAXNAMESIZE 1024 // max filename length
 #define M_SEED 9
 #define MAX_WEIGHT 10
-#define NUM_RUNS 100
+#define NUM_RUNS 1
 
 int rows, cols;
 int* wall;
@@ -212,6 +212,7 @@ void run_vector()
             {
                 // gvl = __builtin_epi_vsetvl(cols-n, __epi_e32, __epi_m1);
                 gvl = vsetvl_e32m1(cols-n); //PLCT
+                // fprintf(stderr, "j=%d/NUM_RUNS=%d t=%d/rows=%d n=%d/cols=%d/gvl=%ul\n", j, NUM_RUNS, t, rows, n, cols, gvl);
                 xNextrow = _MM_LOAD_i32(&dst[n],gvl);
 
                 xSrc = xNextrow;
@@ -242,8 +243,8 @@ void run_vector()
 
 #endif // RESULT_PRINT
 
-    free(wall);
-    free(dst);
+    // free(wall);
+    // free(dst);
 }
 #endif // USE_RISCV_VECTOR
 

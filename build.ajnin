@@ -14,20 +14,29 @@ rule cc |= (../tools/build.sh) (../../llvm/upstream-build/bin/clang++)
 >     command = ../tools/dump $in >$out
 >     description = dump
 
+include file := ../../gem5/gem5.tmpl.ajnin
 include file := ../../spike/spike.tmpl.ajnin
 include list d := tests.txt
 
 list s ::=
     += serial rvv
     += vector rvv -DUSE_RISCV_VECTOR
+    += gem5 magic -DUSE_RISCV_VECTOR
+    += katie canonical -DUSE_RISCV_VECTOR
 
+rule cxx cc &cflags+=' -include stdint.h '
 rule cxx cc &cflags+=' -w '
 
 foreach d {
+    (_$d/bin/$d_serial.exe) --spike&workdir="_$d/bin/"&args=$d0-- (_$d/bin/$d_serial.report)
+        >> ($d.serial) also[>> ($d)] >> (serial) >> (all)
+    (_$d/bin/$d_vector.exe) --spike&workdir="_$d/bin/"&args=$d0-- (_$d/bin/$d_vector.report)
+        >> ($d.vector) also[>> ($d)] >> (vector) >> (all)
+    (_$d/bin/$d_gem5.exe) --gem5&workdir="_$d/bin/"&args=$d0-- (_$d/bin/$d_gem5.report)
+        >> ($d.gem5) also[>> ($d)] >> (gem5) >> (all)
     foreach s {
         rule cxx cc ld &genre=$s0
         (_$d/bin/$d_$s.exe) --dump-- (_$d/bin/$d_$s.dump) also[>> (compile) !] >> ($d)
-        (_$d/bin/$d_$s.exe) --spike&workdir="_$d/bin/"&args=$d0-- (_$d/bin/$d_$s.report) >> ($d) >> (all)
         foreach list f := _$d/src/$$.cpp {
             (_$d/src/$f.cpp)
                 --cxx&cflags+=$s1-- (_$d/bin/$f_$s.o)

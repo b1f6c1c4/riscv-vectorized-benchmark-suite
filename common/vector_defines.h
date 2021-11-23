@@ -333,6 +333,9 @@ vfloat64m1_t vmerge_vvm_f64m1 (vbool64_t mask, vfloat64m1_t op1, vfloat64m1_t op
 //#define _MM_MACC_f32  		__builtin_epi_vfmacc_2xf32
 #define _MM_MACC_f32(op1, op2, op3, op4) vfmacc_vv_f32m1(op1, op2, op3, op4)
 
+#define _MM_MACC_i64(op1, op2, op3, op4) vmacc_vv_i64m1(op1, op2, op3, op4)
+#define _MM_MACC_i32(op1, op2, op3, op4) vmacc_vv_i32m1(op1, op2, op3, op4)
+
 //#define _MM_NMACC_f64  		__builtin_epi_vfnmacc_1xf64 error
 //#define _MM_NMACC_f32  		__builtin_epi_vfnmacc_2xf32 error
 

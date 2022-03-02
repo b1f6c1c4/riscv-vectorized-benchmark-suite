@@ -317,14 +317,14 @@ vfloat64m1_t vmerge_vvm_f64m1 (vbool64_t mask, vfloat64m1_t op1, vfloat64m1_t op
 //#define _MM_MERGE_f32 		__builtin_epi_vfmerge_2xf32
 #define _MM_MERGE_f32(op1, op2, op3, op4) vmerge_vvm_f32m1(op3, op1, op2, op4)
 
-//#define _MM_REDSUM_f64  	__builtin_epi_vfredsum_1xf64 
-#define _MM_REDSUM_f64(op1, op2, op3) vfredsum_vs_f64m1_f64m1(op2, op1, op2, op3)
+//#define _MM_REDSUM_f64  	__builtin_epi_vfredusum_1xf64 
+#define _MM_REDSUM_f64(op1, op2, op3) vfredusum_vs_f64m1_f64m1(op2, op1, op2, op3)
 
-//#define _MM_REDSUM_f32  	__builtin_epi_vfredsum_2xf32
-#define _MM_REDSUM_f32(op1, op2, op3) vfredsum_vs_f32m1_f32m1(op2, op1, op2, op3)
+//#define _MM_REDSUM_f32  	__builtin_epi_vfredusum_2xf32
+#define _MM_REDSUM_f32(op1, op2, op3) vfredusum_vs_f32m1_f32m1(op2, op1, op2, op3)
 
-#define _MM_REDSUM_f64_MASK __builtin_epi_vfredsum_1xf64_mask //TODO, not being used
-#define _MM_REDSUM_f32_MASK __builtin_epi_vfredsum_2xf32_mask  //TODO, not being used
+#define _MM_REDSUM_f64_MASK __builtin_epi_vfredusum_1xf64_mask //TODO, not being used
+#define _MM_REDSUM_f32_MASK __builtin_epi_vfredusum_2xf32_mask  //TODO, not being used
 
 
 //#define _MM_MACC_f64  		__builtin_epi_vfmacc_1xf64
@@ -496,9 +496,9 @@ https://github.com/riscv/rvv-intrinsic-doc/issues/37
 #define _MM_VMFIRST_i32(op1, op2) vfirst_m_b32(op1, op2) //This function is not found in epi's testcases
 
 //#define _MM_VMPOPC_i64 		__builtin_epi_vmpopc_1xi1
-#define _MM_VMPOPC_i64(op1, op2) vpopc_m_b64(op1, op2) //This function is not found in epi's testcases
+#define _MM_VMPOPC_i64(op1, op2) vcpop_m_b64(op1, op2) //This function is not found in epi's testcases
 //#define _MM_VMPOPC_i32 		__builtin_epi_vmpopc_2xi1 
-#define _MM_VMPOPC_i32(op1, op2) vpopc_m_b32(op1, op2) //This function is not found in epi's testcases
+#define _MM_VMPOPC_i32(op1, op2) vcpop_m_b32(op1, op2) //This function is not found in epi's testcases
 
 //#define _MM_VMAND_i64 		__builtin_epi_vmand_1xi1
 #define _MM_VMAND_i64(op1, op2, op3) vmand_mm_b64(op1, op2, op3)

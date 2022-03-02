@@ -24,6 +24,9 @@ list s ::=
     += gem5 magic -DUSE_RISCV_VECTOR
     += katie canonical -DUSE_RISCV_VECTOR
 
+foreach list h := common/$$.h {{
+    rule cxx cc |= (common/$h.h)
+}}
 rule cxx cc &cflags+=' -include stdint.h '
 rule cxx cc &cflags+=' -w '
 
@@ -37,6 +40,13 @@ foreach d {
     foreach s {
         rule cxx cc ld &genre=$s0
         (_$d/bin/$d_$s.exe) --dump-- (_$d/bin/$d_$s.dump) also[>> (compile) !] >> ($d)
+        foreach list f := _$d/src/$$.h {{
+            rule cxx cc |= (_$d/src/$f.h)
+        }}
+        foreach list f := _$d/src/$$.hpp {{
+            rule cxx cc |= (_$d/src/$f.hpp)
+        }}
+        clear list f
         foreach list f := _$d/src/$$.cpp {
             (_$d/src/$f.cpp)
                 --cxx&cflags+=$s1-- (_$d/bin/$f_$s.o)

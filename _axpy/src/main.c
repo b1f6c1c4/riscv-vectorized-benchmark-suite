@@ -23,24 +23,24 @@ float elapsed_time(long long start_time, long long end_time) {
 }
 /*************************************************************************/
 
-void axpy_intrinsics(double a, double *dx, double *dy, int n); 
+void axpy_intrinsics(float a, float *dx, float *dy, int n); 
 
 // Ref version
-void axpy_ref(double a, double *dx, double *dy, int n) {
+void axpy_ref(float a, float *dx, float *dy, int n) {
    int i;
    for (i=0; i<n; i++) {
       dy[i] += a*dx[i];
    }
 }
 
-void init_vector(double *pv, long n, double value)
+void init_vector(float *pv, long n, float value)
 {
    for (int i=0; i<n; i++) pv[i]= value;
 //   int gvl = __builtin_epi_vsetvl(n, __epi_e64, __epi_m1);
-//   __epi_1xi64 v_value   = __builtin_epi_vbroadcast_1xi64(value, gvl);
+//   __epi_1xi32 v_value   = __builtin_epi_vbroadcast_1xi32(value, gvl);
 //   for (int i=0; i<n; ) {
 //    gvl = __builtin_epi_vsetvl(n - i, __epi_e64, __epi_m1);
-//      __builtin_epi_vstore_1xf64(&dx[i], v_res, gvl);
+//      __builtin_epi_vstore_1xf32(&dx[i], v_res, gvl);
 //     i += gvl;
 //   }
 }
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     long long start,end;
     start = get_time();
 
-    double a=1.0;
+    float a=1.0;
     long n;
 
     if (argc == 2)
@@ -60,9 +60,9 @@ int main(int argc, char *argv[])
 
 
     /* Allocate the source and result vectors */
-    double *dx     = (double*)malloc(n*sizeof(double));
-    double *dy     = (double*)malloc(n*sizeof(double));
-    double *dy_ref = (double*)malloc(n*sizeof(double));
+    float *dx     = (float*)aligned_alloc(64, n*sizeof(float));
+    float *dy     = (float*)aligned_alloc(64, n*sizeof(float));
+    float *dy_ref = (float*)aligned_alloc(64, n*sizeof(float));
  
 
     init_vector(dx, n, 1.0);
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     init_vector(dx, n, 1.0);
     init_vector(dy, n, 2.0);
 
-    printf ("doing vector axpy\n");
+    printf ("doing vector axpy of %lu %p %p %p %zu\n", n, dx, dy, dy_ref, sizeof(float));
     start = get_time();
     axpy_intrinsics(a, dx, dy, n);
     end = get_time();

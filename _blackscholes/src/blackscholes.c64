@@ -622,8 +622,8 @@ int main (int argc, char **argv)
     }
 #endif
 
-    data = (OptionData*)malloc(numOptions*sizeof(OptionData));
-    prices = (fptype*)malloc(numOptions*sizeof(fptype));
+    data = (OptionData*)aligned_alloc(64, numOptions*sizeof(OptionData));
+    prices = (fptype*)aligned_alloc(64, numOptions*sizeof(fptype));
     for ( loopnum = 0; loopnum < numOptions; ++ loopnum )
     {
         rv = fscanf(file, "%lf %lf %lf %lf %lf %lf %c %lf %lf", &data[loopnum].s, &data[loopnum].strike, &data[loopnum].r, &data[loopnum].divq, &data[loopnum].v, &data[loopnum].t, &data[loopnum].OptionType, &data[loopnum].divs, &data[loopnum].DGrefval);
@@ -649,17 +649,17 @@ int main (int argc, char **argv)
 #define PAD 256
 #define LINESIZE 64
 
-    buffer = (fptype *) malloc(5 * numOptions * sizeof(fptype) + PAD);
+    buffer = (fptype *) aligned_alloc(64, 5 * numOptions * sizeof(fptype) + PAD);
     sptprice = (fptype *) (((unsigned long long)buffer + PAD) & ~(LINESIZE - 1));
     strike = sptprice + numOptions;
     rate = strike + numOptions;
     volatility = rate + numOptions;
     otime = volatility + numOptions;
 
-    buffer2 = (int *) malloc(numOptions * sizeof(fptype) + PAD);
+    buffer2 = (int *) aligned_alloc(64, numOptions * sizeof(fptype) + PAD);
     otype = (int *) (((unsigned long long)buffer2 + PAD) & ~(LINESIZE - 1));
     
-    buffer3 = (long int *) malloc(numOptions * sizeof(fptype) + PAD);                    // AUXILAR MIENTRAS SIRVEN WIDENING OPERATIONS
+    buffer3 = (long int *) aligned_alloc(64, numOptions * sizeof(fptype) + PAD);                    // AUXILAR MIENTRAS SIRVEN WIDENING OPERATIONS
     otype_d = (long int *) (((unsigned long long)buffer3 + PAD) & ~(LINESIZE - 1)); // AUXILAR MIENTRAS SIRVEN WIDENING OPERATIONS
 
     for (i=0; i<numOptions; i++) {

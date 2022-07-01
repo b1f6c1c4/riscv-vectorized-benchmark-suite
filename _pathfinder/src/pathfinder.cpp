@@ -68,8 +68,8 @@ void init(int argc, char** argv)
     //    }
     printf("cols: %d rows: %d \n", cols , rows);
 
-    wall = new int[rows * cols];
-    result = new int[cols];
+    wall = (int*)aligned_alloc(64, sizeof(int) * rows * cols);
+    result = (int*)aligned_alloc(64, sizeof(int) * cols);
     
     //int seed = M_SEED;
     //srand(seed);
@@ -139,13 +139,13 @@ void run()
     int min;
     int *src,*dst, *temp;
     
-    //src = (int *)malloc(sizeof(int)*cols);
+    //src = (int *)aligned_alloc(64, sizeof(int)*cols);
     
     printf("NUMBER OF RUNS: %d\n",NUM_RUNS);
     long long start = get_time();
 
     for (int j=0; j<NUM_RUNS; j++) {
-        src = new int[cols];
+        src = (int *)aligned_alloc(64, sizeof(int)*cols);
         for (int x = 0; x < cols; x++){
             result[x] = wall[x];
         }

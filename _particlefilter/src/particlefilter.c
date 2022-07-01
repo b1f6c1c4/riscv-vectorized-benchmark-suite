@@ -115,8 +115,8 @@ inline _MMR_f32 randu_vector(long int * seed, int index ,unsigned long int gvl)
     float result[256];
     int num[256];
     //FENCE();
-    //float* result = (float*)malloc(gvl*sizeof(float)); 
-    //int* num = (int*)malloc(gvl*sizeof(int)); 
+    //float* result = (float*)aligned_alloc(64, gvl*sizeof(float)); 
+    //int* num = (int*)aligned_alloc(64, gvl*sizeof(int)); 
 
     FENCE();
     for(int x = index; x < index+gvl; x++){
@@ -309,7 +309,7 @@ void videoSequence(int * I, int IszX, int IszY, int Nfr, int * seed){
     }
     
     /*dilate matrix*/
-    int * newMatrix = (int *)malloc(sizeof(int)*IszX*IszY*Nfr);
+    int * newMatrix = (int *)aligned_alloc(64, sizeof(int)*IszX*IszY*Nfr);
     imdilate_disk(I, IszX, IszY, Nfr, 5, newMatrix);
     int x, y;
     for(x = 0; x < IszX; x++){
@@ -428,7 +428,7 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
     //expected object locations, compared to center
     int radius = 5;
     int diameter = radius*2 - 1;
-    int * disk = (int *)malloc(diameter*diameter*sizeof(int));
+    int * disk = (int *)aligned_alloc(64, diameter*diameter*sizeof(int));
     strelDisk(disk, radius);
     int countOnes = 0;
     int x, y;
@@ -441,13 +441,13 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
 
     //printf("countOnes = %d \n",countOnes); // 69
     
-    float * objxy = (float *)malloc(countOnes*2*sizeof(float));
+    float * objxy = (float *)aligned_alloc(64, countOnes*2*sizeof(float));
     getneighbors(disk, countOnes, objxy, radius);
     
     long long get_neighbors = get_time();
     printf("TIME TO GET NEIGHBORS TOOK: %f\n", elapsed_time(start, get_neighbors));
     //initial weights are all equal (1/Nparticles)
-    float * weights = (float *)malloc(sizeof(float)*Nparticles);
+    float * weights = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
     //#pragma omp parallel for shared(weights, Nparticles) private(x)
     for(x = 0; x < Nparticles; x++){
         weights[x] = 1/((float)(Nparticles));
@@ -455,14 +455,14 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
     long long get_weights = get_time();
     printf("TIME TO GET WEIGHTSTOOK: %f\n", elapsed_time(get_neighbors, get_weights));
     //initial likelihood to 0.0
-    float * likelihood = (float *)malloc(sizeof(float)*Nparticles);
-    float * arrayX = (float *)malloc(sizeof(float)*Nparticles);
-    float * arrayY = (float *)malloc(sizeof(float)*Nparticles);
-    float * xj = (float *)malloc(sizeof(float)*Nparticles);
-    float * yj = (float *)malloc(sizeof(float)*Nparticles);
-    float * CDF = (float *)malloc(sizeof(float)*Nparticles);
-    float * u = (float *)malloc(sizeof(float)*Nparticles);
-    int * ind = (int*)malloc(sizeof(int)*countOnes*Nparticles);
+    float * likelihood = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * arrayX = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * arrayY = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * xj = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * yj = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * CDF = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * u = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    int * ind = (int*)aligned_alloc(64, sizeof(int)*countOnes*Nparticles);
     //#pragma omp parallel for shared(arrayX, arrayY, xe, ye) private(x)
     for(x = 0; x < Nparticles; x++){
         arrayX[x] = xe;
@@ -614,7 +614,7 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
     //expected object locations, compared to center
     int radius = 5;
     int diameter = radius*2 - 1;
-    int * disk = (int *)malloc(diameter*diameter*sizeof(int));
+    int * disk = (int *)aligned_alloc(64, diameter*diameter*sizeof(int));
     strelDisk(disk, radius);
     int countOnes = 0;
     int x, y;
@@ -627,13 +627,13 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
 
     //printf("countOnes = %d \n",countOnes); // 69
     
-    float * objxy = (float *)malloc(countOnes*2*sizeof(float));
+    float * objxy = (float *)aligned_alloc(64, countOnes*2*sizeof(float));
     getneighbors(disk, countOnes, objxy, radius);
     
     long long get_neighbors = get_time();
     printf("TIME TO GET NEIGHBORS TOOK: %f\n", elapsed_time(start, get_neighbors));
     //initial weights are all equal (1/Nparticles)
-    float * weights = (float *)malloc(sizeof(float)*Nparticles);
+    float * weights = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
     //#pragma omp parallel for shared(weights, Nparticles) private(x)
     /*
     for(x = 0; x < Nparticles; x++){
@@ -654,14 +654,14 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
     long long get_weights = get_time();
     printf("TIME TO GET WEIGHTSTOOK: %f\n", elapsed_time(get_neighbors, get_weights));
     //initial likelihood to 0.0
-    float * likelihood = (float *)malloc(sizeof(float)*Nparticles);
-    float * arrayX = (float *)malloc(sizeof(float)*Nparticles);
-    float * arrayY = (float *)malloc(sizeof(float)*Nparticles);
-    float * xj = (float *)malloc(sizeof(float)*Nparticles);
-    float * yj = (float *)malloc(sizeof(float)*Nparticles);
-    float * CDF = (float *)malloc(sizeof(float)*Nparticles);
-    float * u = (float *)malloc(sizeof(float)*Nparticles);
-    int * ind = (int*)malloc(sizeof(int)*countOnes*Nparticles);
+    float * likelihood = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * arrayX = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * arrayY = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * xj = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * yj = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * CDF = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    float * u = (float *)aligned_alloc(64, sizeof(float)*Nparticles);
+    int * ind = (int*)aligned_alloc(64, sizeof(int)*countOnes*Nparticles);
 
     /*
     //#pragma omp parallel for shared(arrayX, arrayY, xe, ye) private(x)
@@ -814,7 +814,7 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
         _MMR_i32        xArray;
 
         long int vector_complete;
-        long int * locations = (long int *)malloc(sizeof(long int)*Nparticles);
+        long int * locations = (long int *)aligned_alloc(64, sizeof(long int)*Nparticles);
         long int valid;
         // gvl     = __builtin_epi_vsetvl(Nparticles, __epi_e64, __epi_m1);
         gvl = vsetvl_e32m1(Nparticles); //PLCT
@@ -941,14 +941,14 @@ int main(int argc, char * argv[]){
         return 0;
     }
     //establish seed
-    int * seed = (int *)malloc(sizeof(int)*Nparticles);
+    int * seed = (int *)aligned_alloc(64, sizeof(int)*Nparticles);
     int i;
     for(i = 0; i < Nparticles; i++)
     {
         seed[i] = time(0)*i;
     }
     //malloc matrix
-    int * I = (int *)malloc(sizeof(int)*IszX*IszY*Nfr); // 128 * 128 * 10 = 163840 * sizeof(int)
+    int * I = (int *)aligned_alloc(64, sizeof(int)*IszX*IszY*Nfr); // 128 * 128 * 10 = 163840 * sizeof(int)
     long long start = get_time();
     //call video sequence
     videoSequence(I, IszX, IszY, Nfr, seed);
@@ -956,7 +956,7 @@ int main(int argc, char * argv[]){
     printf("VIDEO SEQUENCE TOOK %f\n", elapsed_time(start, endVideoSequence));
 
     #ifdef USE_RISCV_VECTOR
-    long int * seed_64 = (long int *)malloc(sizeof(long int)*Nparticles);
+    long int * seed_64 = (long int *)aligned_alloc(64, sizeof(long int)*Nparticles);
     for(i = 0; i < Nparticles; i++)
     {
         seed_64[i] = (long int)seed[i];

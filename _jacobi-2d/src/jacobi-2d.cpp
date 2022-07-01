@@ -165,11 +165,11 @@ int main(int argc, char** argv)
   DATA_TYPE** A;
   DATA_TYPE** B;
   /* Variable declaration/allocation. */
-  A = (DATA_TYPE **)malloc(n * sizeof(DATA_TYPE *));
-  B = (DATA_TYPE **)malloc(n * sizeof(DATA_TYPE *));
+  A = (DATA_TYPE **)aligned_alloc(64, n * sizeof(DATA_TYPE *));
+  B = (DATA_TYPE **)aligned_alloc(64, n * sizeof(DATA_TYPE *));
   for (int i = 0; i < n; i++) {
-    A[i] = (DATA_TYPE *)malloc(n * sizeof(DATA_TYPE));
-    B[i] = (DATA_TYPE *)malloc(n * sizeof(DATA_TYPE));
+    A[i] = (DATA_TYPE *)aligned_alloc(64, n * sizeof(DATA_TYPE));
+    B[i] = (DATA_TYPE *)aligned_alloc(64, n * sizeof(DATA_TYPE));
   }
 
   /* Initialize array(s). */

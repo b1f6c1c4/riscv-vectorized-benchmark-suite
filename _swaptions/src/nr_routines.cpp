@@ -116,7 +116,7 @@ int *ivector(int nl, int nh)
 {
 	int *v;
 
-	v=(int *)malloc((size_t) ((nh-nl+2)*sizeof(int)));
+	v=(int *)aligned_alloc(64, (size_t) ((nh-nl+2)*sizeof(int)));
 	if (!v) nrerror("allocation failure in ivector()");
 	return v-nl+1;
 }
@@ -135,7 +135,7 @@ FTYPE *dvector( int nl, int nh )
 
 	FTYPE *v;
 
-	v=(FTYPE *)malloc((size_t) ((nh-nl+2)*sizeof(FTYPE)));
+	v=(FTYPE *)aligned_alloc(64, (size_t) ((nh-nl+2)*sizeof(FTYPE)));
 	if (!v) nrerror("allocation failure in dvector()");
 	return v-nl+1;
 
@@ -159,13 +159,13 @@ FTYPE **dmatrix( int nrl, int nrh, int ncl, int nch )
 	FTYPE **m;
 
   // allocate pointers to rows
-	m=(FTYPE **) malloc((size_t)((nrow+1)*sizeof(FTYPE*)));
+	m=(FTYPE **) aligned_alloc(64, (size_t)((nrow+1)*sizeof(FTYPE*)));
 	if (!m) nrerror("allocation failure 1 in dmatrix()");
 	m += 1;
 	m -= nrl;
 
   // allocate rows and set pointers to them
-	m[nrl]=(FTYPE *) malloc((size_t)((nrow*ncol+1)*sizeof(FTYPE)));
+	m[nrl]=(FTYPE *) aligned_alloc(64, (size_t)((nrow*ncol+1)*sizeof(FTYPE)));
 	if (!m[nrl]) nrerror("allocation failure 2 in dmatrix()");
 	m[nrl] += 1;
 	m[nrl] -= ncl;

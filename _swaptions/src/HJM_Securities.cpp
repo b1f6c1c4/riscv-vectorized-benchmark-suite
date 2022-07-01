@@ -115,13 +115,13 @@ void * worker(void *arg){
         // Vector seed to get the randon number with vector code
         // unsigned int gvl = __builtin_epi_vsetvl(NUM_TRIALS, __epi_e64, __epi_m1);
         unsigned int gvl = vsetvl_e32m1(NUM_TRIALS); //PLCT
-        swaption_seed_vector = (int*)malloc(gvl*sizeof(int));
+        swaption_seed_vector = (int*)aligned_alloc(64, gvl*sizeof(int));
         for(int j=0; j < gvl; j++) {
         swaption_seed_vector[j] = swaption_seed + j + (i * gvl);
         }
         BLOCK_SIZE_AUX = gvl;
       #else
-        swaption_seed_vector = (int*)malloc(1*sizeof(int));
+        swaption_seed_vector = (int*)aligned_alloc(64, 1*sizeof(int));
         swaption_seed_vector[0] = swaption_seed + i;
         BLOCK_SIZE_AUX = BLOCK_SIZE;
       #endif
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"Number of threads must be between 1 and %d.\n", MAX_THREAD);
 		exit(1);
 	}
-	threads = (pthread_t *) malloc(nThreads * sizeof(pthread_t));
+	threads = (pthread_t *) aligned_alloc(64, nThreads * sizeof(pthread_t));
 	pthread_attr_init(&pthread_custom_attr);
 
 #endif // TBB_VERSION
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
 #ifdef TBB_VERSION
 	  (parm *)memory_parm.allocate(sizeof(parm)*nSwaptions, NULL);
 #else
-	  (parm *)malloc(sizeof(parm)*nSwaptions);
+	  (parm *)aligned_alloc(64, sizeof(parm)*nSwaptions);
 #endif
 
         int k;

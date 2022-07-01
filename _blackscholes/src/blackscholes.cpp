@@ -445,7 +445,7 @@ int bs_thread(void *tid_ptr) {
     // unsigned long int gvl = __builtin_epi_vsetvl(end, __epi_e32, __epi_m1);
     unsigned long int gvl = vsetvl_e32m1(end); //PLCT
     fptype* price;
-    price = (fptype*)malloc(gvl*sizeof(fptype));
+    price = (fptype*)aligned_alloc(64, gvl*sizeof(fptype));
     //price = aligned_alloc(64, gvl*sizeof(fptype));
 
 #ifdef ENABLE_PARSEC_HOOKS
@@ -590,8 +590,8 @@ int main (int argc, char **argv)
     }
 #endif
 
-    data = (OptionData*)malloc(numOptions*sizeof(OptionData));
-    prices = (fptype*)malloc(numOptions*sizeof(fptype));
+    data = (OptionData*)aligned_alloc(64, numOptions*sizeof(OptionData));
+    prices = (fptype*)aligned_alloc(64, numOptions*sizeof(fptype));
     for ( loopnum = 0; loopnum < numOptions; ++ loopnum )
     {
         rv = fscanf(file, "%f %f %f %f %f %f %c %f %f", &data[loopnum].s, &data[loopnum].strike, &data[loopnum].r, &data[loopnum].divq, &data[loopnum].v, &data[loopnum].t, &data[loopnum].OptionType, &data[loopnum].divs, &data[loopnum].DGrefval);
@@ -617,14 +617,14 @@ int main (int argc, char **argv)
 #define PAD 256
 #define LINESIZE 64
 
-    buffer = (fptype *) malloc(5 * numOptions * sizeof(fptype) + PAD);
+    buffer = (fptype *) aligned_alloc(64, 5 * numOptions * sizeof(fptype) + PAD);
     sptprice = (fptype *) (((unsigned long long)buffer + PAD) & ~(LINESIZE - 1));
     strike = sptprice + numOptions;
     rate = strike + numOptions;
     volatility = rate + numOptions;
     otime = volatility + numOptions;
 
-    buffer2 = (int *) malloc(numOptions * sizeof(fptype) + PAD);
+    buffer2 = (int *) aligned_alloc(64, numOptions * sizeof(fptype) + PAD);
     otype = (int *) (((unsigned long long)buffer2 + PAD) & ~(LINESIZE - 1));
 
     for (i=0; i<numOptions; i++) {

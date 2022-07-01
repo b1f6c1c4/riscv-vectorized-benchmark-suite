@@ -770,7 +770,7 @@ float pspeedy(Points *points, float z, long *kcenter, int pid, pthread_barrier_t
 
   if( pid==0 )   {
     *kcenter = 1;
-    costs = (float*)malloc(sizeof(float)*nproc);
+    costs = (float*)aligned_alloc(64, sizeof(float)*nproc);
   }
 
 #ifdef ENABLE_THREADS
@@ -1021,7 +1021,7 @@ float pgain(long x, Points *points, float z, long int *numcenters, int pid, pthr
   float cost_of_opening_x = 0;
 
   if( pid==0 )    { 
-    work_mem = (float*) malloc(stride*(nproc+1)*sizeof(float));
+    work_mem = (float*) aligned_alloc(64, stride*(nproc+1)*sizeof(float));
     gl_cost_of_opening_x = 0;
     gl_number_of_centers_to_close = 0;
   }
@@ -1296,7 +1296,7 @@ int selectfeasible_fast(Points *points, int **feasible, int kmin, int pid, pthre
   int numfeasible = points->num;
   if (numfeasible > (ITER*kmin*log((float)kmin)))
     numfeasible = (int)(ITER*kmin*log((float)kmin));
-  *feasible = (int *)malloc(numfeasible*sizeof(int));
+  *feasible = (int *)aligned_alloc(64, numfeasible*sizeof(int));
   
   float* accumweight;
   float totalweight;
@@ -1326,7 +1326,7 @@ int selectfeasible_fast(Points *points, int **feasible, int kmin, int pid, pthre
 #ifdef TBB_VERSION
   accumweight= (float*)memoryFloat.allocate(sizeof(float)*points->num);
 #else
-  accumweight= (float*)malloc(sizeof(float)*points->num);
+  accumweight= (float*)aligned_alloc(64, sizeof(float)*points->num);
 #endif
 
   accumweight[0] = points->p[0].weight;
@@ -1888,9 +1888,9 @@ void streamCluster( PStream* stream,
   float* centerBlock = (float*)memoryFloat.allocate(centersize*dim*sizeof(float) );
   long* centerIDs = (long*)memoryLong.allocate(centersize*dim*sizeof(long));
 #else
-  float* block = (float*)malloc( chunksize*dim*sizeof(float) );
-  float* centerBlock = (float*)malloc(centersize*dim*sizeof(float) );
-  long* centerIDs = (long*)malloc(centersize*dim*sizeof(long));
+  float* block = (float*)aligned_alloc(64,  chunksize*dim*sizeof(float) );
+  float* centerBlock = (float*)aligned_alloc(64, centersize*dim*sizeof(float) );
+  long* centerIDs = (long*)aligned_alloc(64, centersize*dim*sizeof(long));
 #endif
 
   if( block == NULL ) { 
@@ -1905,7 +1905,7 @@ void streamCluster( PStream* stream,
 #ifdef TBB_VERSION
     (Point *)memoryPoint.allocate(chunksize*sizeof(Point), NULL);
 #else
-    (Point *)malloc(chunksize*sizeof(Point));
+    (Point *)aligned_alloc(64, chunksize*sizeof(Point));
 #endif
 
   for( int i = 0; i < chunksize; i++ ) {
@@ -1918,7 +1918,7 @@ void streamCluster( PStream* stream,
 #ifdef TBB_VERSION
     (Point *)memoryPoint.allocate(centersize*sizeof(Point), NULL);
 #else
-    (Point *)malloc(centersize*sizeof(Point));
+    (Point *)aligned_alloc(64, centersize*sizeof(Point));
 #endif
   centers.num = 0;
 
@@ -1949,9 +1949,9 @@ void streamCluster( PStream* stream,
     is_center = (bool*)calloc(points.num,sizeof(bool));
     center_table = (int*)memoryInt.allocate(points.num*sizeof(int));
 #else
-    switch_membership = (bool*)malloc(points.num*sizeof(bool));
+    switch_membership = (bool*)aligned_alloc(64, points.num*sizeof(bool));
     is_center = (bool*)calloc(points.num,sizeof(bool));
-    center_table = (int*)malloc(points.num*sizeof(int));
+    center_table = (int*)aligned_alloc(64, points.num*sizeof(int));
 #endif
 
 
@@ -1992,9 +1992,9 @@ void streamCluster( PStream* stream,
   is_center = (bool*)calloc(centers.num,sizeof(bool));
   center_table = (int*)memoryInt.allocate(centers.num*sizeof(int));
 #else
-  switch_membership = (bool*)malloc(centers.num*sizeof(bool));
+  switch_membership = (bool*)aligned_alloc(64, centers.num*sizeof(bool));
   is_center = (bool*)calloc(centers.num,sizeof(bool));
-  center_table = (int*)malloc(centers.num*sizeof(int));
+  center_table = (int*)aligned_alloc(64, centers.num*sizeof(int));
 #endif
 
   localSearch( &centers, kmin, kmax ,&kfinal ); // parallel

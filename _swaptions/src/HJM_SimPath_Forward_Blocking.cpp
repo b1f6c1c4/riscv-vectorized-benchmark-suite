@@ -70,8 +70,8 @@ void serialB(FTYPE **pdZ, FTYPE **randZ, int BLOCKSIZE, int iN, int iFactors)
     for(int l=0;l<=iFactors-1;++l){
         for (int j=1;j<=iN-1;++j){
             //for(int b=0; b<BLOCKSIZE; b+=BLOCKSIZE){
-          		// unsigned long int gvl = __builtin_epi_vsetvl(BLOCKSIZE, __epi_e64, __epi_m1);
-    			unsigned long int  gvl = vsetvl_e64m1(BLOCKSIZE); //PLCT
+          		// unsigned int gvl = __builtin_epi_vsetvl(BLOCKSIZE, __epi_e64, __epi_m1);
+    			unsigned int  gvl = vsetvl_e32m1(BLOCKSIZE); //PLCT
                 CumNormalInv_vector(&randZ[l][BLOCKSIZE*j /*+ b*/] , &pdZ[l][BLOCKSIZE*j/* + b*/] , gvl);
     			FENCE();
             //}
@@ -99,7 +99,7 @@ int HJM_SimPath_Forward_Blocking(FTYPE **ppdHJMPath,	//Matrix that stores genera
 				 FTYPE *pdForward,		//t=0 Forward curve
 				 FTYPE *pdTotalDrift,	//Vector containing total drift corrections for different maturities
 				 FTYPE **ppdFactors,	//Factor volatilities
-				 long *lRndSeed,			//Random number seed
+				 int *lRndSeed,			//Random number seed
 				 int BLOCKSIZE)
 {	
 //This function computes and stores an HJM Path for given inputs
@@ -107,7 +107,7 @@ int HJM_SimPath_Forward_Blocking(FTYPE **ppdHJMPath,	//Matrix that stores genera
 //#ifdef USE_RISCV_VECTOR
 	// struct timeval tv1_0, tv2_0;
 	// struct timezone tz_0;
-	// double elapsed0=0.0;
+	// float elapsed0=0.0;
 	// gettimeofday(&tv1_0, &tz_0);
 //#endif
 
@@ -130,16 +130,16 @@ int HJM_SimPath_Forward_Blocking(FTYPE **ppdHJMPath,	//Matrix that stores genera
 	// rest reset to 0
 #ifdef USE_RISCV_VECTOR
 
- //	unsigned long int gvl = __builtin_epi_vsetvl(BLOCKSIZE, __epi_e64, __epi_m1);
-   unsigned long int gvl =  gvl = vsetvl_e64m1(BLOCKSIZE); //PLCT
-	_MMR_f64 xZero;
+ //	unsigned int gvl = __builtin_epi_vsetvl(BLOCKSIZE, __epi_e64, __epi_m1);
+   unsigned int gvl =  gvl = vsetvl_e32m1(BLOCKSIZE); //PLCT
+	_MMR_f32 xZero;
 
-	xZero = _MM_SET_f64(0.0,gvl);
+	xZero = _MM_SET_f32(0.0,gvl);
     //for(int b=0; b<BLOCKSIZE; b++){
         for(j=0;j<=iN-1;j++) {
-            _MM_STORE_f64(&ppdHJMPath[0][BLOCKSIZE*j],_MM_SET_f64(pdForward[j],gvl),gvl);
+            _MM_STORE_f32(&ppdHJMPath[0][BLOCKSIZE*j],_MM_SET_f32(pdForward[j],gvl),gvl);
         	for(i=1;i<=iN-1;++i) {
-	      		_MM_STORE_f64(&ppdHJMPath[i][BLOCKSIZE*j],xZero,gvl);
+	      		_MM_STORE_f32(&ppdHJMPath[i][BLOCKSIZE*j],xZero,gvl);
 	    	} //initializing HJMPath to zero
         }
     //}
@@ -160,7 +160,7 @@ int HJM_SimPath_Forward_Blocking(FTYPE **ppdHJMPath,	//Matrix that stores genera
 	// -----------------------------------------------------
 //#ifdef USE_RISCV_VECTOR
     // gettimeofday(&tv2_0, &tz_0);
-    // elapsed0 = (double) (tv2_0.tv_sec-tv1_0.tv_sec) + (double) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
+    // elapsed0 = (float) (tv2_0.tv_sec-tv1_0.tv_sec) + (float) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
     // printf("HJM_SimPath_Forward_Blocking first part took %8.8lf secs \n", elapsed0 );
 //#endif	
 
@@ -195,7 +195,7 @@ int HJM_SimPath_Forward_Blocking(FTYPE **ppdHJMPath,	//Matrix that stores genera
 
 //#ifdef USE_RISCV_VECTOR
     // gettimeofday(&tv2_0, &tz_0);
-    // elapsed0 = (double) (tv2_0.tv_sec-tv1_0.tv_sec) + (double) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
+    // elapsed0 = (float) (tv2_0.tv_sec-tv1_0.tv_sec) + (float) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
     // printf("HJM_SimPath_Forward_Blocking second part took %8.8lf secs \n", elapsed0 );
 //#endif	
 
@@ -221,7 +221,7 @@ int HJM_SimPath_Forward_Blocking(FTYPE **ppdHJMPath,	//Matrix that stores genera
 
 //#ifdef USE_RISCV_VECTOR
     // gettimeofday(&tv2_0, &tz_0);
-    // elapsed0 = (double) (tv2_0.tv_sec-tv1_0.tv_sec) + (double) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
+    // elapsed0 = (float) (tv2_0.tv_sec-tv1_0.tv_sec) + (float) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
     // printf("HJM_SimPath_Forward_Blocking third part took %8.8lf secs \n", elapsed0 );
 //#endif	
 
@@ -237,22 +237,22 @@ int HJM_SimPath_Forward_Blocking(FTYPE **ppdHJMPath,	//Matrix that stores genera
  	// =====================================================
 	// Generation of HJM Path1 Vector
 	//gvl = __builtin_epi_vsetvl(BLOCKSIZE, __epi_e64, __epi_m1);
-	gvl = vsetvl_e64m1(BLOCKSIZE); //PLCT
+	gvl = vsetvl_e32m1(BLOCKSIZE); //PLCT
 
-    _MMR_f64 xdTotalShock;
+    _MMR_f32 xdTotalShock;
 
 	//for(int b=0; b<BLOCKSIZE; b++){ // b is the blocks
 	  for (j=1;j<=iN-1;++j) {// j is the timestep
 
 	    for (l=0;l<=iN-(j+1);++l){ // l is the future steps
-	      xdTotalShock = _MM_SET_f64(0.0,gvl);
+	      xdTotalShock = _MM_SET_f32(0.0,gvl);
 	      pdDriftxddelt = pdTotalDrift[l]*ddelt;
 
 	      for (i=0;i<=iFactors-1;++i){// i steps through the stochastic factors
-		xdTotalShock = _MM_ADD_f64(xdTotalShock, _MM_MUL_f64(_MM_SET_f64(ppdFactors[i][l],gvl), _MM_LOAD_f64(&pdZ[i][BLOCKSIZE*j],gvl),gvl),gvl);
+		xdTotalShock = _MM_ADD_f32(xdTotalShock, _MM_MUL_f32(_MM_SET_f32(ppdFactors[i][l],gvl), _MM_LOAD_f32(&pdZ[i][BLOCKSIZE*j],gvl),gvl),gvl);
 	      }
 
-	      _MM_STORE_f64(&(ppdHJMPath[j][BLOCKSIZE*l]), _MM_ADD_f64(_MM_LOAD_f64(&ppdHJMPath[j-1][BLOCKSIZE*(l+1)],gvl),_MM_ADD_f64(_MM_SET_f64(pdDriftxddelt,gvl),_MM_MUL_f64(_MM_SET_f64(sqrt_ddelt,gvl),xdTotalShock,gvl),gvl),gvl),gvl);
+	      _MM_STORE_f32(&(ppdHJMPath[j][BLOCKSIZE*l]), _MM_ADD_f32(_MM_LOAD_f32(&ppdHJMPath[j-1][BLOCKSIZE*(l+1)],gvl),_MM_ADD_f32(_MM_SET_f32(pdDriftxddelt,gvl),_MM_MUL_f32(_MM_SET_f32(sqrt_ddelt,gvl),xdTotalShock,gvl),gvl),gvl),gvl);
 	      //as per formula
 	    }
 	  }
@@ -281,7 +281,7 @@ int HJM_SimPath_Forward_Blocking(FTYPE **ppdHJMPath,	//Matrix that stores genera
 
 //#ifdef USE_RISCV_VECTOR
     // gettimeofday(&tv2_0, &tz_0);
-    // elapsed0 = (double) (tv2_0.tv_sec-tv1_0.tv_sec) + (double) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
+    // elapsed0 = (float) (tv2_0.tv_sec-tv1_0.tv_sec) + (float) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
     // printf("HJM_SimPath_Forward_Blocking fourth part took %8.8lf secs \n", elapsed0 );
 //#endif
 

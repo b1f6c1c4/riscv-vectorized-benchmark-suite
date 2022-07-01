@@ -542,7 +542,7 @@ int main (int argc, char **argv)
 //#ifdef USE_RISCV_VECTOR
     struct timeval tv1_0, tv2_0;
     struct timezone tz_0;
-    double elapsed0=0.0;
+    float elapsed0=0.0;
     gettimeofday(&tv1_0, &tz_0);
 //#endif
 
@@ -640,14 +640,14 @@ int main (int argc, char **argv)
 
 //#ifdef USE_RISCV_VECTOR
     gettimeofday(&tv2_0, &tz_0);
-    elapsed0 = (double) (tv2_0.tv_sec-tv1_0.tv_sec) + (double) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
+    elapsed0 = (float) (tv2_0.tv_sec-tv1_0.tv_sec) + (float) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
     printf("\n\nBlackScholes Initialization took %8.8lf secs   \n", elapsed0 );
 //#endif
 
 //#ifdef USE_RISCV_VECTOR
     struct timeval tv1, tv2;
     struct timezone tz;
-    double elapsed1=0.0;
+    float elapsed1=0.0;
     gettimeofday(&tv1, &tz);
 //#endif
 
@@ -707,7 +707,7 @@ int main (int argc, char **argv)
 
 //#ifdef USE_RISCV_VECTOR
     gettimeofday(&tv2, &tz);
-    elapsed1 = (double) (tv2.tv_sec-tv1.tv_sec) + (double) (tv2.tv_usec-tv1.tv_usec) * 1.e-6; 
+    elapsed1 = (float) (tv2.tv_sec-tv1.tv_sec) + (float) (tv2.tv_usec-tv1.tv_usec) * 1.e-6; 
     printf("\n\nBlackScholes Kernel took %8.8lf secs   \n", elapsed1 );
 //#endif
 

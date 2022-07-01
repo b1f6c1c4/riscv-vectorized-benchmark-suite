@@ -25,7 +25,7 @@
 /************************************************************************/
 
 using namespace std;
-#define DATA_TYPE double
+#define DATA_TYPE float
 #define RESULT_PRINT
 string outfilename;
 
@@ -46,31 +46,31 @@ void init_array (int n, DATA_TYPE **A, DATA_TYPE **B)
 #ifdef USE_RISCV_VECTOR
 void kernel_jacobi_2d_vector(int tsteps,int n, DATA_TYPE **A,DATA_TYPE **B)
 {
-    _MMR_f64    xU;
-    _MMR_f64    xUtmp;
-    _MMR_f64    xUleft;
-    _MMR_f64    xUright;
-    _MMR_f64    xUtop;
-    _MMR_f64    xUbottom;
-    _MMR_f64    xConstant;
+    _MMR_f32    xU;
+    _MMR_f32    xUtmp;
+    _MMR_f32    xUleft;
+    _MMR_f32    xUright;
+    _MMR_f32    xUtop;
+    _MMR_f32    xUbottom;
+    _MMR_f32    xConstant;
 
-    double diff, sum=0.0;
+    float diff, sum=0.0;
     unsigned long int izq,der;
     int size_y = n-2;
     int size_x = n-2;
 
     // unsigned long int gvl = __builtin_epi_vsetvl(size_y, __epi_e64, __epi_m1);
-    unsigned long int gvl =  vsetvl_e64m1(size_y); //PLCT
+    unsigned long int gvl =  vsetvl_e32m1(size_y); //PLCT
 
-    xConstant = _MM_SET_f64(0.20,gvl);
+    xConstant = _MM_SET_f32(0.20,gvl);
 
     for (int j=1; j<=size_x; j=j+gvl) 
     {
         // gvl = __builtin_epi_vsetvl(size_y-j+1, __epi_e64, __epi_m1);
-        gvl =  vsetvl_e64m1(size_y-j+1); //PLCT
-        xU = _MM_LOAD_f64(&A[1][j],gvl);
-        xUtop = _MM_LOAD_f64(&A[0][j],gvl);
-        xUbottom = _MM_LOAD_f64(&A[2][j],gvl);
+        gvl =  vsetvl_e32m1(size_y-j+1); //PLCT
+        xU = _MM_LOAD_f32(&A[1][j],gvl);
+        xUtop = _MM_LOAD_f32(&A[0][j],gvl);
+        xUbottom = _MM_LOAD_f32(&A[2][j],gvl);
 
         for (int i=1; i<=size_y; i++) 
         {
@@ -78,18 +78,18 @@ void kernel_jacobi_2d_vector(int tsteps,int n, DATA_TYPE **A,DATA_TYPE **B)
             {
                 xUtop = xU;
                 xU =  xUbottom;
-                xUbottom =  _MM_LOAD_f64(&A[i+1][j],gvl);
+                xUbottom =  _MM_LOAD_f32(&A[i+1][j],gvl);
             }
             izq = *(unsigned long int*)&A[i][j-1]; 
             der = *(unsigned long int*)&A[i][j+gvl];
-            xUleft = _MM_VSLIDE1UP_f64(xU,izq,gvl);
-            xUright = _MM_VSLIDE1DOWN_f64(xU,der,gvl);
-            xUtmp = _MM_ADD_f64(xUleft,xUright,gvl);
-            xUtmp = _MM_ADD_f64(xUtmp,xUtop,gvl);
-            xUtmp = _MM_ADD_f64(xUtmp,xUbottom,gvl);
-            xUtmp = _MM_ADD_f64(xUtmp,xU,gvl);
-            xUtmp = _MM_MUL_f64(xUtmp,xConstant,gvl);
-            _MM_STORE_f64(&B[i][j], xUtmp,gvl);
+            xUleft = _MM_VSLIDE1UP_f32(xU,izq,gvl);
+            xUright = _MM_VSLIDE1DOWN_f32(xU,der,gvl);
+            xUtmp = _MM_ADD_f32(xUleft,xUright,gvl);
+            xUtmp = _MM_ADD_f32(xUtmp,xUtop,gvl);
+            xUtmp = _MM_ADD_f32(xUtmp,xUbottom,gvl);
+            xUtmp = _MM_ADD_f32(xUtmp,xU,gvl);
+            xUtmp = _MM_MUL_f32(xUtmp,xConstant,gvl);
+            _MM_STORE_f32(&B[i][j], xUtmp,gvl);
         }
     }
     FENCE();
@@ -129,8 +129,8 @@ long long get_time() {
 }
 
 // Returns the number of seconds elapsed between the two specified times
-double elapsed_time(long long start_time, long long end_time) {
-        return (double) (end_time - start_time) / (1000 * 1000);
+float elapsed_time(long long start_time, long long end_time) {
+        return (float) (end_time - start_time) / (1000 * 1000);
 }
 
 

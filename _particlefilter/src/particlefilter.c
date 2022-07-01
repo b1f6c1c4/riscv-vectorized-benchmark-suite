@@ -43,10 +43,10 @@ float elapsed_time(long long start_time, long long end_time) {
         return (float) (end_time - start_time) / (1000 * 1000);
 }
 /** 
-* Takes in a double and returns an integer that approximates to that double
+* Takes in a float and returns an integer that approximates to that float
 * @return if the mantissa < .5 => return value < input value; else return value > input value
 */
-double roundDouble(double value){
+float roundDouble(float value){
     int newValue = (int)(value);
     if(value - newValue < .5)
     return newValue;
@@ -81,30 +81,30 @@ void setIf(int testValue, int newValue, int * array3D, int * dimX, int * dimY, i
 * @param index The specific index of the seed to be advanced
 * @return a uniformly distributed number [0, 1)
 */
-double randu(int * seed, int index)
+float randu(int * seed, int index)
 {
     int num = A*seed[index] + C;
     seed[index] = num % M;
-    return fabs(seed[index]/((double) M));
+    return fabs(seed[index]/((float) M));
 }
 
 #ifdef USE_RISCV_VECTOR
-inline _MMR_f64 randu_vector(long int * seed, int index ,unsigned long int gvl)
+inline _MMR_f32 randu_vector(long int * seed, int index ,unsigned long int gvl)
 {
     /*
-    _MMR_i64    xseed = _MM_LOAD_i64(&seed[index],gvl);
-    _MMR_i64    xA = _MM_SET_i64(A,gvl);
-    _MMR_i64    xC = _MM_SET_i64(C,gvl);
-    _MMR_i64    xM = _MM_SET_i64(M,gvl);
+    _MMR_i32    xseed = _MM_LOAD_i32(&seed[index],gvl);
+    _MMR_i32    xA = _MM_SET_i32(A,gvl);
+    _MMR_i32    xC = _MM_SET_i32(C,gvl);
+    _MMR_i32    xM = _MM_SET_i32(M,gvl);
     
-    xseed =  _MM_MUL_i64(xseed,xA,gvl);
-    xseed =  _MM_ADD_i64(xseed,xC,gvl);
+    xseed =  _MM_MUL_i32(xseed,xA,gvl);
+    xseed =  _MM_ADD_i32(xseed,xC,gvl);
 
-    _MM_STORE_i64(&seed[index],_MM_REM_i64(xseed,xM,gvl),gvl);
+    _MM_STORE_i32(&seed[index],_MM_REM_i32(xseed,xM,gvl),gvl);
     FENCE();
-    _MMR_f64    xResult;
-    xResult = _MM_DIV_f64(_MM_VFCVT_F_X_f64(xseed,gvl),_MM_VFCVT_F_X_f64(xM,gvl),gvl);
-    xResult = _MM_VFSGNJX_f64(xResult,xResult,gvl);
+    _MMR_f32    xResult;
+    xResult = _MM_DIV_f32(_MM_VFCVT_F_X_f32(xseed,gvl),_MM_VFCVT_F_X_f32(xM,gvl),gvl);
+    xResult = _MM_VFSGNJX_f32(xResult,xResult,gvl);
     return xResult;
     */
     
@@ -112,20 +112,20 @@ inline _MMR_f64 randu_vector(long int * seed, int index ,unsigned long int gvl)
     Esta parte del codigo deberia ser en 32 bits, pero las instrucciones de conversion aún no están disponibles,
     moviendo todo a 64 bits el resultado cambia ya que no se desborda, y las variaciones son muchas.
     */
-    double result[256];
+    float result[256];
     int num[256];
     //FENCE();
-    //double* result = (double*)malloc(gvl*sizeof(double)); 
+    //float* result = (float*)malloc(gvl*sizeof(float)); 
     //int* num = (int*)malloc(gvl*sizeof(int)); 
 
     FENCE();
     for(int x = index; x < index+gvl; x++){
         num[x-index] = A*seed[x] + C;
         seed[x] = num[x-index] % M;
-        result[x-index] = fabs(seed[x]/((double) M));
+        result[x-index] = fabs(seed[x]/((float) M));
     }
-    _MMR_f64    xResult;
-    xResult = _MM_LOAD_f64(&result[0],gvl);
+    _MMR_f32    xResult;
+    xResult = _MM_LOAD_f32(&result[0],gvl);
     FENCE();
     return xResult;
 }
@@ -135,32 +135,32 @@ inline _MMR_f64 randu_vector(long int * seed, int index ,unsigned long int gvl)
 * @note This function is thread-safe
 * @param seed The seed array
 * @param index The specific index of the seed to be advanced
-* @return a double representing random number generated using the Box-Muller algorithm
+* @return a float representing random number generated using the Box-Muller algorithm
 * @see http://en.wikipedia.org/wiki/Normal_distribution, section computing value for normal random distribution
 */
-double randn(int * seed, int index){
+float randn(int * seed, int index){
     /*Box-Muller algorithm*/
-    double u = randu(seed, index);
-    double v = randu(seed, index);
-    double cosine = cos(2*PI*v);
-    double rt = -2*log(u);
+    float u = randu(seed, index);
+    float v = randu(seed, index);
+    float cosine = cos(2*PI*v);
+    float rt = -2*log(u);
     return sqrt(rt)*cosine;
 }
 
 #ifdef USE_RISCV_VECTOR
-_MMR_f64 randn_vector(long int * seed, int index ,unsigned long int gvl){
+_MMR_f32 randn_vector(long int * seed, int index ,unsigned long int gvl){
     /*Box-Muller algorithm*/
-    _MMR_f64    xU = randu_vector(seed,index,gvl);
-    _MMR_f64    xV = randu_vector(seed,index,gvl);
-    _MMR_f64    xCosine;
-    _MMR_f64    xRt;
+    _MMR_f32    xU = randu_vector(seed,index,gvl);
+    _MMR_f32    xV = randu_vector(seed,index,gvl);
+    _MMR_f32    xCosine;
+    _MMR_f32    xRt;
     
-    xV = _MM_MUL_f64(_MM_SET_f64(PI*2.0,gvl),xV,gvl);
-    xCosine =_MM_COS_f64(xV,gvl);
+    xV = _MM_MUL_f32(_MM_SET_f32(PI*2.0,gvl),xV,gvl);
+    xCosine =_MM_COS_f32(xV,gvl);
     FENCE();
-    xU = _MM_LOG_f64(xU,gvl);
-    xRt =  _MM_MUL_f64(_MM_SET_f64(-2.0,gvl),xU,gvl);
-    return _MM_MUL_f64(_MM_SQRT_f64(xRt,gvl),xCosine,gvl);
+    xU = _MM_LOG_f32(xU,gvl);
+    xRt =  _MM_MUL_f32(_MM_SET_f32(-2.0,gvl),xU,gvl);
+    return _MM_MUL_f32(_MM_SQRT_f32(xRt,gvl),xCosine,gvl);
 }
 #endif // USE_RISCV_VECTOR
 /**
@@ -192,7 +192,7 @@ void strelDisk(int * disk, int radius)
     int x, y;
     for(x = 0; x < diameter; x++){
         for(y = 0; y < diameter; y++){
-            double distance = sqrt(pow((double)(x-radius+1),2) + pow((double)(y-radius+1),2));
+            float distance = sqrt(pow((float)(x-radius+1),2) + pow((float)(y-radius+1),2));
             if(distance < radius)
             disk[x*diameter + y] = 1;
         }
@@ -226,7 +226,7 @@ void dilate_matrix(int * matrix, int posX, int posY, int posZ, int dimX, int dim
     int x,y;
     for(x = startX; x < endX; x++){
         for(y = startY; y < endY; y++){
-            double distance = sqrt( pow((double)(x-posX),2) + pow((double)(y-posY),2) );
+            float distance = sqrt( pow((float)(x-posX),2) + pow((float)(y-posY),2) );
             if(distance < error)
             matrix[x*dimY*dimZ + y*dimZ + posZ] = 1;
         }
@@ -262,7 +262,7 @@ void imdilate_disk(int * matrix, int dimX, int dimY, int dimZ, int error, int * 
 * @param neighbors The array that will contain the offsets
 * @param radius The radius used for dilation
 */
-void getneighbors(int * se, int numOnes, double * neighbors, int radius){
+void getneighbors(int * se, int numOnes, float * neighbors, int radius){
     int x, y;
     int neighY = 0;
     int center = radius - 1;
@@ -332,10 +332,10 @@ void videoSequence(int * I, int IszX, int IszY, int Nfr, int * seed){
 * @param I The 3D matrix
 * @param ind The current ind array
 * @param numOnes The length of ind array
-* @return A double representing the sum
+* @return A float representing the sum
 */
-double calcLikelihoodSum(int * I, int * ind, int numOnes){
-    double likelihoodSum = 0.0;
+float calcLikelihoodSum(int * I, int * ind, int numOnes){
+    float likelihoodSum = 0.0;
     int y;
     for(y = 0; y < numOnes; y++)
     likelihoodSum += (pow((I[ind[y]] - 100),2) - pow((I[ind[y]]-228),2))/50.0;
@@ -349,7 +349,7 @@ double calcLikelihoodSum(int * I, int * ind, int numOnes){
 * @param value The value to be found
 * @return The index of value in the CDF; if value is never found, returns the last index
 */
-int findIndex(double * CDF, int lengthCDF, double value){
+int findIndex(float * CDF, int lengthCDF, float value){
     int index = -1;
     int x;
 
@@ -383,7 +383,7 @@ int findIndex(double * CDF, int lengthCDF, double value){
 * @return The index of value in the CDF; if value is never found, returns the last index
 * @warning Use at your own risk; not fully tested
 */
-int findIndexBin(double * CDF, int beginIndex, int endIndex, double value){
+int findIndexBin(float * CDF, int beginIndex, int endIndex, float value){
     if(endIndex < beginIndex)
     return -1;
     int middleIndex = beginIndex + ((endIndex - beginIndex)/2);
@@ -422,8 +422,8 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
     int max_size = IszX*IszY*Nfr;
     long long start = get_time();
     //original particle centroid
-    double xe = roundDouble(IszY/2.0);
-    double ye = roundDouble(IszX/2.0);
+    float xe = roundDouble(IszY/2.0);
+    float ye = roundDouble(IszX/2.0);
     
     //expected object locations, compared to center
     int radius = 5;
@@ -441,27 +441,27 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
 
     //printf("countOnes = %d \n",countOnes); // 69
     
-    double * objxy = (double *)malloc(countOnes*2*sizeof(double));
+    float * objxy = (float *)malloc(countOnes*2*sizeof(float));
     getneighbors(disk, countOnes, objxy, radius);
     
     long long get_neighbors = get_time();
     printf("TIME TO GET NEIGHBORS TOOK: %f\n", elapsed_time(start, get_neighbors));
     //initial weights are all equal (1/Nparticles)
-    double * weights = (double *)malloc(sizeof(double)*Nparticles);
+    float * weights = (float *)malloc(sizeof(float)*Nparticles);
     //#pragma omp parallel for shared(weights, Nparticles) private(x)
     for(x = 0; x < Nparticles; x++){
-        weights[x] = 1/((double)(Nparticles));
+        weights[x] = 1/((float)(Nparticles));
     }
     long long get_weights = get_time();
     printf("TIME TO GET WEIGHTSTOOK: %f\n", elapsed_time(get_neighbors, get_weights));
     //initial likelihood to 0.0
-    double * likelihood = (double *)malloc(sizeof(double)*Nparticles);
-    double * arrayX = (double *)malloc(sizeof(double)*Nparticles);
-    double * arrayY = (double *)malloc(sizeof(double)*Nparticles);
-    double * xj = (double *)malloc(sizeof(double)*Nparticles);
-    double * yj = (double *)malloc(sizeof(double)*Nparticles);
-    double * CDF = (double *)malloc(sizeof(double)*Nparticles);
-    double * u = (double *)malloc(sizeof(double)*Nparticles);
+    float * likelihood = (float *)malloc(sizeof(float)*Nparticles);
+    float * arrayX = (float *)malloc(sizeof(float)*Nparticles);
+    float * arrayY = (float *)malloc(sizeof(float)*Nparticles);
+    float * xj = (float *)malloc(sizeof(float)*Nparticles);
+    float * yj = (float *)malloc(sizeof(float)*Nparticles);
+    float * CDF = (float *)malloc(sizeof(float)*Nparticles);
+    float * u = (float *)malloc(sizeof(float)*Nparticles);
     int * ind = (int*)malloc(sizeof(int)*countOnes*Nparticles);
     //#pragma omp parallel for shared(arrayX, arrayY, xe, ye) private(x)
     for(x = 0; x < Nparticles; x++){
@@ -502,7 +502,7 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
             likelihood[x] = 0;
             for(y = 0; y < countOnes; y++)
                 likelihood[x] += (pow((I[ind[x*countOnes + y]] - 100),2) - pow((I[ind[x*countOnes + y]]-228),2))/50.0;
-            likelihood[x] = likelihood[x]/((double) countOnes);
+            likelihood[x] = likelihood[x]/((float) countOnes);
         }
         long long likelihood_time = get_time();
         printf("TIME TO GET LIKELIHOODS TOOK: %f\n", elapsed_time(error, likelihood_time));
@@ -514,7 +514,7 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
         }
         long long exponential = get_time();
         printf("TIME TO GET EXP TOOK: %f\n", elapsed_time(likelihood_time, exponential));
-        double sumWeights = 0;
+        float sumWeights = 0;
         //#pragma omp parallel for private(x) reduction(+:sumWeights)
         for(x = 0; x < Nparticles; x++){
             sumWeights += weights[x];
@@ -539,7 +539,7 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
         printf("TIME TO MOVE OBJECT TOOK: %f\n", elapsed_time(normalize, move_time));
         printf("XE: %lf\n", xe);
         printf("YE: %lf\n", ye);
-        double distance = sqrt( pow((double)(xe-(int)roundDouble(IszY/2.0)),2) + pow((double)(ye-(int)roundDouble(IszX/2.0)),2) );
+        float distance = sqrt( pow((float)(xe-(int)roundDouble(IszY/2.0)),2) + pow((float)(ye-(int)roundDouble(IszX/2.0)),2) );
         printf("%lf\n", distance);
         //display(hold off for now)
         
@@ -554,10 +554,10 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
         }
         long long cum_sum = get_time();
         printf("TIME TO CALC CUM SUM TOOK: %f\n", elapsed_time(move_time, cum_sum));
-        double u1 = (1/((double)(Nparticles)))*randu(seed, 0);
+        float u1 = (1/((float)(Nparticles)))*randu(seed, 0);
         //#pragma omp parallel for shared(u, u1, Nparticles) private(x)
         for(x = 0; x < Nparticles; x++){
-            u[x] = u1 + x/((double)(Nparticles));
+            u[x] = u1 + x/((float)(Nparticles));
         }
         long long u_time = get_time();
         printf("TIME TO CALC U TOOK: %f\n", elapsed_time(cum_sum, u_time));
@@ -583,7 +583,7 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
             //reassign arrayX and arrayY
             arrayX[x] = xj[x];
             arrayY[x] = yj[x];
-            weights[x] = 1/((double)(Nparticles));
+            weights[x] = 1/((float)(Nparticles));
         }
         long long reset = get_time();
         printf("TIME TO RESET WEIGHTS TOOK: %f\n", elapsed_time(xyj_time, reset));
@@ -608,8 +608,8 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
     int max_size = IszX*IszY*Nfr;
     long long start = get_time();
     //original particle centroid
-    double xe = roundDouble(IszY/2.0);
-    double ye = roundDouble(IszX/2.0);
+    float xe = roundDouble(IszY/2.0);
+    float ye = roundDouble(IszX/2.0);
     
     //expected object locations, compared to center
     int radius = 5;
@@ -627,40 +627,40 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
 
     //printf("countOnes = %d \n",countOnes); // 69
     
-    double * objxy = (double *)malloc(countOnes*2*sizeof(double));
+    float * objxy = (float *)malloc(countOnes*2*sizeof(float));
     getneighbors(disk, countOnes, objxy, radius);
     
     long long get_neighbors = get_time();
     printf("TIME TO GET NEIGHBORS TOOK: %f\n", elapsed_time(start, get_neighbors));
     //initial weights are all equal (1/Nparticles)
-    double * weights = (double *)malloc(sizeof(double)*Nparticles);
+    float * weights = (float *)malloc(sizeof(float)*Nparticles);
     //#pragma omp parallel for shared(weights, Nparticles) private(x)
     /*
     for(x = 0; x < Nparticles; x++){
-        weights[x] = 1/((double)(Nparticles));
+        weights[x] = 1/((float)(Nparticles));
     }*/
     // unsigned long int gvl = __builtin_epi_vsetvl(Nparticles, __epi_e64, __epi_m1);
-    unsigned long int gvl = vsetvl_e64m1(Nparticles); //PLCT
+    unsigned long int gvl = vsetvl_e32m1(Nparticles); //PLCT
 
-    _MMR_f64    xweights = _MM_SET_f64(1.0/((double)(Nparticles)),gvl);
+    _MMR_f32    xweights = _MM_SET_f32(1.0/((float)(Nparticles)),gvl);
     for(x = 0; x < Nparticles; x=x+gvl){
         // gvl     = __builtin_epi_vsetvl(Nparticles-x, __epi_e64, __epi_m1);
-        gvl = vsetvl_e64m1(Nparticles-x); //PLCT
+        gvl = vsetvl_e32m1(Nparticles-x); //PLCT
 
-        _MM_STORE_f64(&weights[x],xweights,gvl);
+        _MM_STORE_f32(&weights[x],xweights,gvl);
     }
     FENCE();
 
     long long get_weights = get_time();
     printf("TIME TO GET WEIGHTSTOOK: %f\n", elapsed_time(get_neighbors, get_weights));
     //initial likelihood to 0.0
-    double * likelihood = (double *)malloc(sizeof(double)*Nparticles);
-    double * arrayX = (double *)malloc(sizeof(double)*Nparticles);
-    double * arrayY = (double *)malloc(sizeof(double)*Nparticles);
-    double * xj = (double *)malloc(sizeof(double)*Nparticles);
-    double * yj = (double *)malloc(sizeof(double)*Nparticles);
-    double * CDF = (double *)malloc(sizeof(double)*Nparticles);
-    double * u = (double *)malloc(sizeof(double)*Nparticles);
+    float * likelihood = (float *)malloc(sizeof(float)*Nparticles);
+    float * arrayX = (float *)malloc(sizeof(float)*Nparticles);
+    float * arrayY = (float *)malloc(sizeof(float)*Nparticles);
+    float * xj = (float *)malloc(sizeof(float)*Nparticles);
+    float * yj = (float *)malloc(sizeof(float)*Nparticles);
+    float * CDF = (float *)malloc(sizeof(float)*Nparticles);
+    float * u = (float *)malloc(sizeof(float)*Nparticles);
     int * ind = (int*)malloc(sizeof(int)*countOnes*Nparticles);
 
     /*
@@ -671,19 +671,19 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
     }
     */
     // gvl     = __builtin_epi_vsetvl(Nparticles, __epi_e64, __epi_m1);
-    gvl = vsetvl_e64m1(Nparticles); //PLCT
-    _MMR_f64    xArrayX = _MM_SET_f64(xe,gvl);
-    _MMR_f64    xArrayY = _MM_SET_f64(ye,gvl);
+    gvl = vsetvl_e32m1(Nparticles); //PLCT
+    _MMR_f32    xArrayX = _MM_SET_f32(xe,gvl);
+    _MMR_f32    xArrayY = _MM_SET_f32(ye,gvl);
     for(int i = 0; i < Nparticles; i=i+gvl){
        // gvl     = __builtin_epi_vsetvl(Nparticles-i, __epi_e64, __epi_m1);
-        gvl = vsetvl_e64m1(Nparticles-i); //PLCT
-        _MM_STORE_f64(&arrayX[i],xArrayX,gvl);
-        _MM_STORE_f64(&arrayY[i],xArrayY,gvl);
+        gvl = vsetvl_e32m1(Nparticles-i); //PLCT
+        _MM_STORE_f32(&arrayX[i],xArrayX,gvl);
+        _MM_STORE_f32(&arrayY[i],xArrayY,gvl);
     }
     FENCE();
     
 
-    _MMR_f64    xAux;
+    _MMR_f32    xAux;
 
     int k;
     printf("TIME TO SET ARRAYS TOOK: %f\n", elapsed_time(get_weights, get_time()));
@@ -694,27 +694,27 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
         //draws sample from motion model (random walk). The only prior information
         //is that the object moves 2x as fast as in the y direction
         // gvl     = __builtin_epi_vsetvl(Nparticles, __epi_e64, __epi_m1);
-        gvl = vsetvl_e64m1(Nparticles); //PLCT 
+        gvl = vsetvl_e32m1(Nparticles); //PLCT 
         for(x = 0; x < Nparticles; x=x+gvl){
         // gvl     = __builtin_epi_vsetvl(Nparticles-x, __epi_e64, __epi_m1);
-        gvl = vsetvl_e64m1(Nparticles-x); //PLCT
-            xArrayX = _MM_LOAD_f64(&arrayX[x],gvl);
+        gvl = vsetvl_e32m1(Nparticles-x); //PLCT
+            xArrayX = _MM_LOAD_f32(&arrayX[x],gvl);
             FENCE();
             xAux = randn_vector(seed_64, x,gvl);
             FENCE();
-            xAux =  _MM_MUL_f64(xAux, _MM_SET_f64(5.0,gvl),gvl); 
-            xAux =  _MM_ADD_f64(xAux, _MM_SET_f64(1.0,gvl),gvl); 
-            xArrayX = _MM_ADD_f64(xAux, xArrayX ,gvl); 
-            _MM_STORE_f64(&arrayX[x],xArrayX,gvl);
+            xAux =  _MM_MUL_f32(xAux, _MM_SET_f32(5.0,gvl),gvl); 
+            xAux =  _MM_ADD_f32(xAux, _MM_SET_f32(1.0,gvl),gvl); 
+            xArrayX = _MM_ADD_f32(xAux, xArrayX ,gvl); 
+            _MM_STORE_f32(&arrayX[x],xArrayX,gvl);
             
-            xArrayY = _MM_LOAD_f64(&arrayY[x],gvl);
+            xArrayY = _MM_LOAD_f32(&arrayY[x],gvl);
             FENCE();
             xAux = randn_vector(seed_64, x,gvl);
             FENCE();
-            xAux =  _MM_MUL_f64(xAux, _MM_SET_f64(2.0,gvl),gvl); 
-            xAux =  _MM_ADD_f64(xAux, _MM_SET_f64(-2.0,gvl),gvl); 
-            xArrayY = _MM_ADD_f64(xAux, xArrayY ,gvl); 
-            _MM_STORE_f64(&arrayY[x],xArrayY,gvl);
+            xAux =  _MM_MUL_f32(xAux, _MM_SET_f32(2.0,gvl),gvl); 
+            xAux =  _MM_ADD_f32(xAux, _MM_SET_f32(-2.0,gvl),gvl); 
+            xArrayY = _MM_ADD_f32(xAux, xArrayY ,gvl); 
+            _MM_STORE_f32(&arrayY[x],xArrayY,gvl);
         }
         FENCE();
         /*
@@ -744,7 +744,7 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
             likelihood[x] = 0;
             for(y = 0; y < countOnes; y++)
                 likelihood[x] += (pow((I[ind[x*countOnes + y]] - 100),2) - pow((I[ind[x*countOnes + y]]-228),2))/50.0;
-            likelihood[x] = likelihood[x]/((double) countOnes);
+            likelihood[x] = likelihood[x]/((float) countOnes);
         }
         long long likelihood_time = get_time();
         printf("TIME TO GET LIKELIHOODS TOOK: %f\n", elapsed_time(error, likelihood_time));
@@ -756,7 +756,7 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
         }
         long long exponential = get_time();
         printf("TIME TO GET EXP TOOK: %f\n", elapsed_time(likelihood_time, exponential));
-        double sumWeights = 0;
+        float sumWeights = 0;
         //#pragma omp parallel for private(x) reduction(+:sumWeights)
         for(x = 0; x < Nparticles; x++){
             sumWeights += weights[x];
@@ -781,7 +781,7 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
         printf("TIME TO MOVE OBJECT TOOK: %f\n", elapsed_time(normalize, move_time));
         printf("XE: %lf\n", xe);
         printf("YE: %lf\n", ye);
-        double distance = sqrt( pow((double)(xe-(int)roundDouble(IszY/2.0)),2) + pow((double)(ye-(int)roundDouble(IszX/2.0)),2) );
+        float distance = sqrt( pow((float)(xe-(int)roundDouble(IszY/2.0)),2) + pow((float)(ye-(int)roundDouble(IszX/2.0)),2) );
         printf("%lf\n", distance);
         //display(hold off for now)
         
@@ -796,50 +796,50 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
         }
         long long cum_sum = get_time();
         printf("TIME TO CALC CUM SUM TOOK: %f\n", elapsed_time(move_time, cum_sum));
-        double u1 = (1/((double)(Nparticles)))*randu(seed, 0);
+        float u1 = (1/((float)(Nparticles)))*randu(seed, 0);
         //#pragma omp parallel for shared(u, u1, Nparticles) private(x)
         for(x = 0; x < Nparticles; x++){
-            u[x] = u1 + x/((double)(Nparticles));
+            u[x] = u1 + x/((float)(Nparticles));
         }
         long long u_time = get_time();
         printf("TIME TO CALC U TOOK: %f\n", elapsed_time(cum_sum, u_time));
         
         int j, i;
 
-        _MMR_MASK_i64   xComp;
-        _MMR_i64        xMask;
+        _MMR_MASK_i32   xComp;
+        _MMR_i32        xMask;
 
-        _MMR_f64        xCDF;
-        _MMR_f64        xU;
-        _MMR_i64        xArray;
+        _MMR_f32        xCDF;
+        _MMR_f32        xU;
+        _MMR_i32        xArray;
 
         long int vector_complete;
         long int * locations = (long int *)malloc(sizeof(long int)*Nparticles);
         long int valid;
         // gvl     = __builtin_epi_vsetvl(Nparticles, __epi_e64, __epi_m1);
-        gvl = vsetvl_e64m1(Nparticles); //PLCT
+        gvl = vsetvl_e32m1(Nparticles); //PLCT
         for(i = 0; i < Nparticles; i=i+gvl){
            //  gvl     = __builtin_epi_vsetvl(Nparticles-i, __epi_e64, __epi_m1);
-            gvl = vsetvl_e64m1(Nparticles-i); //PLCT
+            gvl = vsetvl_e32m1(Nparticles-i); //PLCT
             vector_complete = 0;
-            xMask   = _MM_SET_i64(0,gvl);
-            xArray  = _MM_SET_i64(Nparticles-1,gvl);
-            xU      = _MM_LOAD_f64(&u[i],gvl);
+            xMask   = _MM_SET_i32(0,gvl);
+            xArray  = _MM_SET_i32(Nparticles-1,gvl);
+            xU      = _MM_LOAD_f32(&u[i],gvl);
             for(j = 0; j < Nparticles; j++){    
-                xCDF = _MM_SET_f64(CDF[j],gvl);
-                xComp = _MM_VFGE_f64(xCDF,xU,gvl);
-                xComp = _MM_CAST_i1_i64(_MM_XOR_i64(_MM_CAST_i64_i1(xComp,gvl),xMask,gvl),gvl);
-                valid = _MM_VMFIRST_i64(xComp,gvl);
+                xCDF = _MM_SET_f32(CDF[j],gvl);
+                xComp = _MM_VFGE_f32(xCDF,xU,gvl);
+                xComp = _MM_CAST_i1_i32(_MM_XOR_i32(_MM_CAST_i32_i1(xComp,gvl),xMask,gvl),gvl);
+                valid = _MM_VMFIRST_i32(xComp,gvl);
                 if(valid != -1)
                 {
-                    xArray = _MM_MERGE_i64(xArray,_MM_SET_i64(j,gvl),xComp,gvl);
-                    xMask = _MM_OR_i64(_MM_CAST_i64_i1(xComp,gvl),xMask,gvl);
-                    vector_complete = _MM_VMPOPC_i64(_MM_CAST_i1_i64(xMask,gvl),gvl);
+                    xArray = _MM_MERGE_i32(xArray,_MM_SET_i32(j,gvl),xComp,gvl);
+                    xMask = _MM_OR_i32(_MM_CAST_i32_i1(xComp,gvl),xMask,gvl);
+                    vector_complete = _MM_VMPOPC_i32(_MM_CAST_i1_i32(xMask,gvl),gvl);
                 }
                 if(vector_complete == gvl){ break; }
                 //FENCE();
             }
-            _MM_STORE_i64(&locations[i],xArray,gvl);
+            _MM_STORE_i32(&locations[i],xArray,gvl);
         }
         FENCE();
         //for(i = 0; i < Nparticles; i++) { printf("%d ", locations[i]); } printf("\n");        
@@ -861,7 +861,7 @@ void particleFilter_vector(int * I, int IszX, int IszY, int Nfr, int * seed, lon
             //reassign arrayX and arrayY
             arrayX[x] = xj[x];
             arrayY[x] = yj[x];
-            weights[x] = 1/((double)(Nparticles));
+            weights[x] = 1/((float)(Nparticles));
         }
         long long reset = get_time();
         printf("TIME TO RESET WEIGHTS TOOK: %f\n", elapsed_time(xyj_time, reset));

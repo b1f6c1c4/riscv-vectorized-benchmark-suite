@@ -46,9 +46,9 @@ int iN = 11;
 int iFactors = 3; 
 parm *swaptions;
 
-long seed = 1979; //arbitrary (but constant) default value (birth year of Christian Bienia)
-long swaption_seed;
-long *swaption_seed_vector;
+int seed = 1979; //arbitrary (but constant) default value (birth year of Christian Bienia)
+int swaption_seed;
+int *swaption_seed_vector;
 
 
 
@@ -113,15 +113,15 @@ void * worker(void *arg){
 
       #ifdef USE_RISCV_VECTOR
         // Vector seed to get the randon number with vector code
-        // unsigned long int gvl = __builtin_epi_vsetvl(NUM_TRIALS, __epi_e64, __epi_m1);
-        unsigned long int gvl = vsetvl_e64m1(NUM_TRIALS); //PLCT
-        swaption_seed_vector = (long*)malloc(gvl*sizeof(long));
+        // unsigned int gvl = __builtin_epi_vsetvl(NUM_TRIALS, __epi_e64, __epi_m1);
+        unsigned int gvl = vsetvl_e32m1(NUM_TRIALS); //PLCT
+        swaption_seed_vector = (int*)malloc(gvl*sizeof(int));
         for(int j=0; j < gvl; j++) {
         swaption_seed_vector[j] = swaption_seed + j + (i * gvl);
         }
         BLOCK_SIZE_AUX = gvl;
       #else
-        swaption_seed_vector = (long*)malloc(1*sizeof(long));
+        swaption_seed_vector = (int*)malloc(1*sizeof(int));
         swaption_seed_vector[0] = swaption_seed + i;
         BLOCK_SIZE_AUX = BLOCK_SIZE;
       #endif
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
         }
 
         printf("Number of Simulations: %d,  Number of threads: %d Number of swaptions: %d\n", NUM_TRIALS, nThreads, nSwaptions);
-        swaption_seed = (long)(2147483647L * RanUnif(&seed));
+        swaption_seed = (int)(2147483647L * RanUnif(&seed));
 
 #ifdef ENABLE_THREADS
 
@@ -310,7 +310,7 @@ int main(int argc, char *argv[])
 //#ifdef USE_RISCV_VECTOR
      struct timeval tv1_0, tv2_0;
      struct timezone tz_0;
-     double elapsed0=0.0;
+     float elapsed0=0.0;
      gettimeofday(&tv1_0, &tz_0);
 //#endif
 
@@ -341,7 +341,7 @@ int main(int argc, char *argv[])
 
 //#ifdef USE_RISCV_VECTOR
      gettimeofday(&tv2_0, &tz_0);
-     elapsed0 = (double) (tv2_0.tv_sec-tv1_0.tv_sec) + (double) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
+     elapsed0 = (float) (tv2_0.tv_sec-tv1_0.tv_sec) + (float) (tv2_0.tv_usec-tv1_0.tv_usec) * 1.e-6; 
      printf("\n\nSwaption Pricing Routine took %8.8lf secs   \n", elapsed0 );
 //#endif
 

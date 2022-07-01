@@ -97,14 +97,14 @@ float dist(Point p1, Point p2, int dim);
 #ifdef TBB_VERSION
 struct HizReduction {
 private:
-  double hiz;
+  float hiz;
 public:
   Points *points;
   HizReduction(Points *points_): hiz(0),points(points_){}
   HizReduction( HizReduction &d, tbb::split){hiz=0; points = d.points;}
 
   void operator()(const tbb::blocked_range<int>& range) {
-    double myhiz = 0;
+    float myhiz = 0;
     long ptDimension = points->dim;
     int begin = range.begin();
     int end = range.end();
@@ -117,7 +117,7 @@ public:
   }
 
   void join(HizReduction &d){hiz += d.getHiz(); /*fprintf(stderr,"reducing: %lf\n",hiz);*/}
-  double getHiz(){return hiz;}
+  float getHiz(){return hiz;}
 
 };
 
@@ -142,7 +142,7 @@ struct CenterCreate {
 
 struct CenterOpen {
 private:
-  double total_cost;
+  float total_cost;
 public:
   Points *points;
   int i;
@@ -161,7 +161,7 @@ public:
     int end = range.end();
 
     if(type) {
-      double local_total = 0.0;
+      float local_total = 0.0;
       for(int k = begin; k!=end; k++ )  
 	local_total+=points->p[k].cost;
       total_cost += local_total;
@@ -180,7 +180,7 @@ public:
 
 
   void join(CenterOpen &lhs){total_cost+=lhs.getTotalCost();}
-  double getTotalCost(){return total_cost;}
+  float getTotalCost(){return total_cost;}
 
 };
 
@@ -189,11 +189,11 @@ public:
 class CenterTableCount: public tbb::task{
 private:
   Points *points;
-  double *work_mem;
+  float *work_mem;
   int stride;
   int pid;
 public:
-  CenterTableCount(int id, int s, Points *p, double *mem):
+  CenterTableCount(int id, int s, Points *p, float *mem):
     pid(id), stride(s), points(p),work_mem(mem){}
 
   task *execute() {
@@ -225,10 +225,10 @@ public:
 class CenterTableCountTask: public tbb::task {
   int is_continuation;
   Points *points;
-  double *work_mem;
+  float *work_mem;
   int stride;
 public:
-  CenterTableCountTask(int s, Points *p, double *mem):
+  CenterTableCountTask(int s, Points *p, float *mem):
     stride(s), points(p), work_mem(mem), is_continuation(0){} 
 
   task *execute() {
@@ -264,11 +264,11 @@ public:
 
 class FixCenter: public tbb::task {
   Points *points;
-  double *work_mem;
+  float *work_mem;
   int pid;
   int stride;
 public:
-  FixCenter(int id, int s, Points *p, double *mem):
+  FixCenter(int id, int s, Points *p, float *mem):
     pid(id),stride(s),points(p),work_mem(mem){}
   task *execute(){
 #ifdef SERIAL_FIXCENTER
@@ -299,10 +299,10 @@ public:
 class FixCenterTask: public tbb::task {
   bool is_continuation;
   Points *points;
-  double *work_mem;
+  float *work_mem;
   int stride;
 public:
-  FixCenterTask(int s, Points *p, double *mem):
+  FixCenterTask(int s, Points *p, float *mem):
     stride(s), points(p), work_mem(mem), is_continuation(false){} 
 
   task *execute() {
@@ -327,19 +327,19 @@ public:
 
 class LowerCost: public tbb::task {
   Points *points;
-  double *work_mem;
+  float *work_mem;
   long x;
   int K;
   int pid;
   int stride;
 public:
-  LowerCost(int id, int s, Points *p, long x_, double *mem, int k): 
+  LowerCost(int id, int s, Points *p, long x_, float *mem, int k): 
     pid(id), stride(s), points(p), work_mem(mem), K(k), x(x_){}
   task *execute() {
 
     //my *lower* fields
-    double* lower = &work_mem[pid*stride];
-    double local_cost_of_opening_x = 0;
+    float* lower = &work_mem[pid*stride];
+    float local_cost_of_opening_x = 0;
     long bsize = points->num/((NUM_DIVISIONS)); //points->num/1;//((NUM_DIVISIONS));
     long k1 = bsize * pid;
     long k2 = k1 + bsize;
@@ -352,7 +352,7 @@ public:
     /*fprintf(stderr,"\t[LowerCost]: pid=%d stride=%d from %d to %d\n",
       pid, stride, k1, k2);  */
     
-    double *cost_of_opening_x = &work_mem[pid*stride + K+1];
+    float *cost_of_opening_x = &work_mem[pid*stride + K+1];
 
     for ( i = k1; i < k2; i++ ) {
       float x_cost = dist(points->p[i], points->p[x], points->dim) 
@@ -394,12 +394,12 @@ public:
 class LowerCostTask: public tbb::task {
   bool is_continuation;
   Points *points;
-  double *work_mem;
+  float *work_mem;
   int K;
   long x;
   int stride;
 public:
-  LowerCostTask(int s, Points *p, long x_, double *mem, int k): 
+  LowerCostTask(int s, Points *p, long x_, float *mem, int k): 
     stride(s), points(p), work_mem(mem), K(k), x(x_), is_continuation(false){}
 
   task *execute() {
@@ -426,19 +426,19 @@ public:
 
 class CenterClose: public tbb::task {
   Points *points;
-  double *work_mem;
-  double *number_of_centers_to_close;
-  double z;
+  float *work_mem;
+  float *number_of_centers_to_close;
+  float z;
   int pid, stride;
   int K;
 
 public:
-  CenterClose(int id, int s, Points *p, double *mem, int k, double z_): 
+  CenterClose(int id, int s, Points *p, float *mem, int k, float z_): 
     pid(id),stride(s),points(p),work_mem(mem),K(k), z(z_){}
 
   task *execute() {
-    double* gl_lower = &work_mem[(NUM_DIVISIONS)*stride];
-    double *cost_of_opening_x;
+    float* gl_lower = &work_mem[(NUM_DIVISIONS)*stride];
+    float *cost_of_opening_x;
     int local_number_of_centers_to_close = 0;
     long bsize = points->num/((NUM_DIVISIONS)); //
     long k1 = bsize * pid;
@@ -455,7 +455,7 @@ public:
     
       for ( int i = k1; i < k2; i++ ) {
 	if( is_center[i] ) {
-	  double low = z;
+	  float low = z;
 	  //aggregate from all threads
 	  for( int p = 0; p < (NUM_DIVISIONS); p++ ) {
 	    low += work_mem[center_table[i]+p*stride];
@@ -471,7 +471,7 @@ public:
 	  }
 	}
       }
-      *number_of_centers_to_close = (double)local_number_of_centers_to_close;
+      *number_of_centers_to_close = (float)local_number_of_centers_to_close;
       return NULL;
   }
 
@@ -481,12 +481,12 @@ public:
 class CenterCloseTask: public tbb::task {
   bool is_continuation;
   Points *points;
-  double *work_mem;
+  float *work_mem;
   int stride;
-  double z;
+  float z;
   int K;
 public:
-  CenterCloseTask(int s, Points *p, double *mem, int k, double z_): 
+  CenterCloseTask(int s, Points *p, float *mem, int k, float z_): 
     stride(s),points(p),work_mem(mem),K(k), z(z_), is_continuation(false){}
 
   task *execute() {
@@ -514,14 +514,14 @@ public:
 
 class SaveMoney: public tbb::task{
   Points *points;
-  double *work_mem;
+  float *work_mem;
   long x;
   int pid, stride;
 public:
-  SaveMoney(int id, int s, Points *p, long x_, double *mem): 
+  SaveMoney(int id, int s, Points *p, long x_, float *mem): 
     pid(id), stride(s), points(p), x(x_), work_mem(mem){}
   task *execute() {
-    double* gl_lower = &work_mem[(NUM_DIVISIONS)*stride];
+    float* gl_lower = &work_mem[(NUM_DIVISIONS)*stride];
     long bsize = points->num/((NUM_DIVISIONS));//points->num/1;//((NUM_DIVISIONS));
     long k1 = bsize * pid;
     long k2 = k1 + bsize;
@@ -566,11 +566,11 @@ class SaveMoneyTask: public tbb::task {
   bool is_continuation;
   Points *points;
   long x;
-  double* work_mem;
+  float* work_mem;
   int stride;
 
 public:
-  SaveMoneyTask(int s, Points *p, long x_, double *mem): 
+  SaveMoneyTask(int s, Points *p, long x_, float *mem): 
     stride(s), points(p), x(x_), work_mem(mem) ,is_continuation(false){}
 
 
@@ -697,9 +697,9 @@ float dist(Point p1, Point p2, int dim )
 /* run speedy on the points, return total cost of solution */
 float pspeedy(Points *points, float z, long *kcenter)
 {
-  static double totalcost;
+  static float totalcost;
   static bool open = false;
-  static double* costs; //cost for each thread. 
+  static float* costs; //cost for each thread. 
   static int i;
 
 
@@ -715,7 +715,7 @@ float pspeedy(Points *points, float z, long *kcenter)
 
   {
     int grain_size = points->num / ((NUM_DIVISIONS));
-    double acc_cost = 0.0;
+    float acc_cost = 0.0;
     CenterOpen c(points);
     for(i = 1; i < points->num; i++ )  {
       bool to_open = ((float)lrand48()/(float)INT_MAX)<(points->p[i].cost/z);
@@ -750,10 +750,10 @@ float pspeedy(Points *points, float z, long *kcenter, int pid, pthread_barrier_t
   long k2 = k1 + bsize;
   if( pid == nproc-1 ) k2 = points->num;
 
-  static double totalcost;
+  static float totalcost;
 
   static bool open = false;
-  static double* costs; //cost for each thread. 
+  static float* costs; //cost for each thread. 
   static int i;
 
 #ifdef ENABLE_THREADS
@@ -770,7 +770,7 @@ float pspeedy(Points *points, float z, long *kcenter, int pid, pthread_barrier_t
 
   if( pid==0 )   {
     *kcenter = 1;
-    costs = (double*)malloc(sizeof(double)*nproc);
+    costs = (float*)malloc(sizeof(float)*nproc);
   }
 
 #ifdef ENABLE_THREADS
@@ -842,7 +842,7 @@ float pspeedy(Points *points, float z, long *kcenter, int pid, pthread_barrier_t
   pthread_barrier_wait(barrier);
 #endif
   open = false;
-  double mytotal = 0;
+  float mytotal = 0;
   for( int k = k1; k < k2; k++ )  {
     mytotal += points->p[k].cost;
   }
@@ -888,29 +888,29 @@ float pspeedy(Points *points, float z, long *kcenter, int pid, pthread_barrier_t
 
 
 #ifdef TBB_VERSION
-double pgain(long x, Points *points, double z, long int *numcenters)
+float pgain(long x, Points *points, float z, long int *numcenters)
 {
   int i;
   int number_of_centers_to_close = 0;
 
-  static double *work_mem;
-  static double gl_cost_of_opening_x;
+  static float *work_mem;
+  static float gl_cost_of_opening_x;
   static int gl_number_of_centers_to_close;
 
   //each thread takes a block of working_mem.
   int stride = *numcenters+2;
 
   //make stride a multiple of CACHE_LINE
-  int cl = CACHE_LINE/sizeof(double);
+  int cl = CACHE_LINE/sizeof(float);
   if( stride % cl != 0 ) { 
     stride = cl * ( stride / cl + 1);
   }
   int K = stride -2 ; // K==*numcenters
   
   //my own cost of opening x
-  double cost_of_opening_x = 0;
+  float cost_of_opening_x = 0;
 
-  work_mem = (double*) calloc(stride*((NUM_DIVISIONS)+1),sizeof(double));
+  work_mem = (float*) calloc(stride*((NUM_DIVISIONS)+1),sizeof(float));
   
   gl_cost_of_opening_x = 0;
   gl_number_of_centers_to_close = 0;
@@ -938,7 +938,7 @@ double pgain(long x, Points *points, double z, long int *numcenters)
 
   //now we finish building the table. clear the working memory.
   memset(switch_membership, 0, points->num*sizeof(bool));
-  memset(work_mem, 0, (NUM_DIVISIONS+1)*stride*sizeof(double));
+  memset(work_mem, 0, (NUM_DIVISIONS+1)*stride*sizeof(float));
 
   /* loopB */
   {
@@ -988,7 +988,7 @@ double pgain(long x, Points *points, double z, long int *numcenters)
 #else //!TBB_VERSION
 
 
-double pgain(long x, Points *points, double z, long int *numcenters, int pid, pthread_barrier_t* barrier)
+float pgain(long x, Points *points, float z, long int *numcenters, int pid, pthread_barrier_t* barrier)
 {
   //  printf("pgain pthread %d begin\n",pid);
 #ifdef ENABLE_THREADS
@@ -1004,24 +1004,24 @@ double pgain(long x, Points *points, double z, long int *numcenters, int pid, pt
   int i;
   int number_of_centers_to_close = 0;
 
-  static double *work_mem;
-  static double gl_cost_of_opening_x;
+  static float *work_mem;
+  static float gl_cost_of_opening_x;
   static int gl_number_of_centers_to_close;
 
   //each thread takes a block of working_mem.
   int stride = *numcenters+2;
   //make stride a multiple of CACHE_LINE
-  int cl = CACHE_LINE/sizeof(double);
+  int cl = CACHE_LINE/sizeof(float);
   if( stride % cl != 0 ) { 
     stride = cl * ( stride / cl + 1);
   }
   int K = stride -2 ; // K==*numcenters
   
   //my own cost of opening x
-  double cost_of_opening_x = 0;
+  float cost_of_opening_x = 0;
 
   if( pid==0 )    { 
-    work_mem = (double*) malloc(stride*(nproc+1)*sizeof(double));
+    work_mem = (float*) malloc(stride*(nproc+1)*sizeof(float));
     gl_cost_of_opening_x = 0;
     gl_number_of_centers_to_close = 0;
   }
@@ -1068,17 +1068,17 @@ double pgain(long x, Points *points, double z, long int *numcenters, int pid, pt
 
   //now we finish building the table. clear the working memory.
   memset(switch_membership + k1, 0, (k2-k1)*sizeof(bool));
-  memset(work_mem+pid*stride, 0, stride*sizeof(double));
-  if( pid== 0 ) memset(work_mem+nproc*stride,0,stride*sizeof(double));
+  memset(work_mem+pid*stride, 0, stride*sizeof(float));
+  if( pid== 0 ) memset(work_mem+nproc*stride,0,stride*sizeof(float));
 
 #ifdef ENABLE_THREADS
   pthread_barrier_wait(barrier);
 #endif
   
   //my *lower* fields
-  double* lower = &work_mem[pid*stride];
+  float* lower = &work_mem[pid*stride];
   //global *lower* fields
-  double* gl_lower = &work_mem[nproc*stride];
+  float* gl_lower = &work_mem[nproc*stride];
 
 //printf("----------------------------------------------------\n");
   for ( i = k1; i < k2; i++ ) {
@@ -1119,7 +1119,7 @@ double pgain(long x, Points *points, double z, long int *numcenters, int pid, pt
 
   for ( int i = k1; i < k2; i++ ) {
     if( is_center[i] ) {
-      double low = z;
+      float low = z;
       //aggregate from all threads
       for( int p = 0; p < nproc; p++ ) {
 	low += work_mem[center_table[i]+p*stride];
@@ -1214,12 +1214,12 @@ double pgain(long x, Points *points, double z, long int *numcenters, int pid, pt
 
 #ifdef TBB_VERSION
 float pFL(Points *points, int *feasible, int numfeasible,
-	  double z, long *k, double cost, long iter, double e)
+	  float z, long *k, float cost, long iter, float e)
 {
 
   long i;
   long x;
-  double change;
+  float change;
   long numberOfPoints;
 
   change = cost;
@@ -1246,7 +1246,7 @@ float pFL(Points *points, int *feasible, int numfeasible,
 
 #else //!TBB_VERSION
  float pFL(Points *points, int *feasible, int numfeasible,
-	  float z, long *k, double cost, long iter, float e, 
+	  float z, long *k, float cost, long iter, float e, 
 	  int pid, pthread_barrier_t* barrier)
 {
 #ifdef ENABLE_THREADS
@@ -1254,7 +1254,7 @@ float pFL(Points *points, int *feasible, int numfeasible,
 #endif
   long i;
   long x;
-  double change;
+  float change;
   long numberOfPoints;
 
   change = cost;
@@ -1294,8 +1294,8 @@ int selectfeasible_fast(Points *points, int **feasible, int kmin, int pid, pthre
 #endif
 {
   int numfeasible = points->num;
-  if (numfeasible > (ITER*kmin*log((double)kmin)))
-    numfeasible = (int)(ITER*kmin*log((double)kmin));
+  if (numfeasible > (ITER*kmin*log((float)kmin)))
+    numfeasible = (int)(ITER*kmin*log((float)kmin));
   *feasible = (int *)malloc(numfeasible*sizeof(int));
   
   float* accumweight;
@@ -1374,17 +1374,17 @@ float pkmedian(Points *points, long kmin, long kmax, long* kfinal,
 	       int pid, pthread_barrier_t* barrier )
 {
   int i;
-  double cost;
-  double lastcost;
-  double hiz, loz, z;
+  float cost;
+  float lastcost;
+  float hiz, loz, z;
 
   static long k;
   static int *feasible;
   static int numfeasible;
-  static double* hizs;
+  static float* hizs;
 
 
-  //  hizs = (double*)calloc(nproc,sizeof(double));
+  //  hizs = (float*)calloc(nproc,sizeof(float));
   hiz = loz = 0.0;
   long numberOfPoints = points->num;
   long ptDimension = points->dim;
@@ -1470,7 +1470,7 @@ float pkmedian(Points *points, long kmin, long kmax, long* kfinal,
     /* first get a rough estimate on the FL solution */
     lastcost = cost;
     cost = pFL(points, feasible, numfeasible,
-	       z, &k, cost, (long)(ITER*kmax*log((double)kmax)), 0.1);
+	       z, &k, cost, (long)(ITER*kmax*log((float)kmax)), 0.1);
 
     /* if number of centers seems good, try a more accurate FL */
     if (((k <= (1.1)*kmax)&&(k >= (0.9)*kmin))||
@@ -1479,7 +1479,7 @@ float pkmedian(Points *points, long kmin, long kmax, long* kfinal,
       /* may need to run a little longer here before halting without
 	 improvement */
       cost = pFL(points, feasible, numfeasible,
-		 z, &k, cost, (long)(ITER*kmax*log((double)kmax)), 0.001);
+		 z, &k, cost, (long)(ITER*kmax*log((float)kmax)), 0.001);
     }
 
     if (k > kmax) {
@@ -1520,16 +1520,16 @@ float pkmedian(Points *points, long kmin, long kmax, long* kfinal,
 	       int pid, pthread_barrier_t* barrier )
 {
   int i;
-  double cost;
-  double lastcost;
-  double hiz, loz, z;
+  float cost;
+  float lastcost;
+  float hiz, loz, z;
 
   static long k;
   static int *feasible;
   static int numfeasible;
-  static double* hizs;
+  static float* hizs;
 
-  if( pid==0 ) hizs = (double*)calloc(nproc,sizeof(double));
+  if( pid==0 ) hizs = (float*)calloc(nproc,sizeof(float));
   hiz = loz = 0.0;
   long numberOfPoints = points->num;
   long ptDimension = points->dim;
@@ -1544,7 +1544,7 @@ float pkmedian(Points *points, long kmin, long kmax, long* kfinal,
   pthread_barrier_wait(barrier);
 #endif
 
-  double myhiz = 0;
+  float myhiz = 0;
   for (long kk=k1;kk < k2; kk++ ) {
     myhiz += dist(points->p[kk], points->p[0],
 		      ptDimension )*points->p[kk].weight;
@@ -1614,7 +1614,7 @@ float pkmedian(Points *points, long kmin, long kmax, long* kfinal,
     /* first get a rough estimate on the FL solution */
     lastcost = cost;
     cost = pFL(points, feasible, numfeasible,
-	       z, &k, cost, (long)(ITER*kmax*log((double)kmax)), 0.1, pid, barrier);
+	       z, &k, cost, (long)(ITER*kmax*log((float)kmax)), 0.1, pid, barrier);
 
     /* if number of centers seems good, try a more accurate FL */
     if (((k <= (1.1)*kmax)&&(k >= (0.9)*kmin))||
@@ -1623,7 +1623,7 @@ float pkmedian(Points *points, long kmin, long kmax, long* kfinal,
       /* may need to run a little longer here before halting without
 	 improvement */
       cost = pFL(points, feasible, numfeasible,
-		 z, &k, cost, (long)(ITER*kmax*log((double)kmax)), 0.001, pid, barrier);
+		 z, &k, cost, (long)(ITER*kmax*log((float)kmax)), 0.001, pid, barrier);
     }
 
     if (k > kmax) {
@@ -2076,7 +2076,7 @@ int main(int argc, char **argv)
 //#ifdef USE_RISCV_VECTOR
     struct timeval tv1, tv2;
     struct timezone tz;
-    double elapsed=0.0;
+    float elapsed=0.0;
     gettimeofday(&tv1, &tz);
 //#endif
 
@@ -2084,7 +2084,7 @@ int main(int argc, char **argv)
 
 //#ifdef USE_RISCV_VECTOR
     gettimeofday(&tv2, &tz);
-    elapsed = (double) (tv2.tv_sec-tv1.tv_sec) + (double) (tv2.tv_usec-tv1.tv_usec) * 1.e-6; 
+    elapsed = (float) (tv2.tv_sec-tv1.tv_sec) + (float) (tv2.tv_usec-tv1.tv_usec) * 1.e-6; 
     printf("\n\nstreamCluster Kernel took %8.8lf secs   \n", elapsed );
 //#endif
 

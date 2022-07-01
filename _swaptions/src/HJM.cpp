@@ -14,9 +14,9 @@
 #include "HJM_type.h"
 
 int HJM_SimPath_Yield(FTYPE **ppdHJMPath, int iN, int iFactors, FTYPE dYears, FTYPE *pdYield, FTYPE **ppdFactors,
-					  long *lRndSeed);
+					  int *lRndSeed);
 int HJM_SimPath_Forward(FTYPE **ppdHJMPath, int iN, int iFactors, FTYPE dYears, FTYPE *pdForward, FTYPE *pdTotalDrift,
-						FTYPE **ppdFactors, long *lRndSeed);
+						FTYPE **ppdFactors, int *lRndSeed);
 int HJM_Yield_to_Forward(FTYPE *pdForward, int iN, FTYPE *pdYield);
 int HJM_Factors(FTYPE **ppdFactors,int iN, int iFactors, FTYPE *pdVol, FTYPE **ppdFacBreak);
 int HJM_Drifts(FTYPE *pdTotalDrift, FTYPE **ppdDrifts, int iN, int iFactors, FTYPE dYears, FTYPE **ppdFactors);
@@ -31,7 +31,7 @@ int HJM_SimPath_Yield(FTYPE **ppdHJMPath,  //Matrix that stores generated HJM pa
 					  FTYPE dYears,		//Number of years
 					  FTYPE *pdYield,		//Input yield curve (at t=0) for dYears (iN time steps)
 					  FTYPE **ppdFactors,	//Matrix of Factor Volatilies
-					  long *lRndSeed)
+					  int *lRndSeed)
 {
 //This function returns a single generated HJM Path for the given inputs
 
@@ -190,7 +190,7 @@ int HJM_SimPath_Forward(FTYPE **ppdHJMPath,	//Matrix that stores generated HJM p
 						FTYPE *pdForward,		//t=0 Forward curve
 						FTYPE *pdTotalDrift,	//Vector containing total drift corrections for different maturities
 						FTYPE **ppdFactors,	//Factor volatilities
-						long *lRndSeed)			//Random number seed
+						int *lRndSeed)			//Random number seed
 {	
 //This function computes and stores an HJM Path for given inputs
 
@@ -417,12 +417,12 @@ int Discount_Factors_Blocking_vector(FTYPE *pdDiscountFactors,
 	FTYPE ddelt;			//HJM time-step length
 	ddelt = (FTYPE) (dYears/iN);
 
-	// unsigned long int gvl = __builtin_epi_vsetvl(BLOCKSIZE, __epi_e64, __epi_m1);
-	unsigned long int gvl = vsetvl_e64m1(BLOCKSIZE); //PLCT
-    _MMR_f64 	xDdelt;
-	_MMR_f64   	xpdRatePath;
+	// unsigned int gvl = __builtin_epi_vsetvl(BLOCKSIZE, __epi_e64, __epi_m1);
+	unsigned int gvl = vsetvl_e32m1(BLOCKSIZE); //PLCT
+    _MMR_f32 	xDdelt;
+	_MMR_f32   	xpdRatePath;
 
-	xDdelt = _MM_SET_f64(ddelt,gvl);
+	xDdelt = _MM_SET_f32(ddelt,gvl);
 
 	FTYPE *pdexpRes;
 	pdexpRes = dvector(0,(iN-1)*BLOCKSIZE-1);
@@ -430,24 +430,24 @@ int Discount_Factors_Blocking_vector(FTYPE *pdDiscountFactors,
 	//precompute the exponientials
 	for (j=0; j<=(iN-1)*BLOCKSIZE-1; j+=BLOCKSIZE)
 		{ 
-			xpdRatePath = _MM_LOAD_f64(&pdRatePath[j],gvl);
-			xpdRatePath = _MM_MUL_f64(xpdRatePath,xDdelt,gvl);
-			xpdRatePath = _MM_EXP_f64(_MM_VFSGNJN_f64(xpdRatePath,xpdRatePath,gvl) ,gvl);
-			_MM_STORE_f64(&pdexpRes[j],xpdRatePath,gvl);
+			xpdRatePath = _MM_LOAD_f32(&pdRatePath[j],gvl);
+			xpdRatePath = _MM_MUL_f32(xpdRatePath,xDdelt,gvl);
+			xpdRatePath = _MM_EXP_f32(_MM_VFSGNJN_f32(xpdRatePath,xpdRatePath,gvl) ,gvl);
+			_MM_STORE_f32(&pdexpRes[j],xpdRatePath,gvl);
 		}
 
 	//initializing the discount factor vector
 	for (i=0; i<(iN)*BLOCKSIZE; i+=BLOCKSIZE)
 	{
-	  _MM_STORE_f64(&pdDiscountFactors[i],_MM_SET_f64(1.0,gvl),gvl);
+	  _MM_STORE_f32(&pdDiscountFactors[i],_MM_SET_f32(1.0,gvl),gvl);
 	}
 
 	for (i=1; i<=iN-1; ++i){
 	    for (j=0; j<=i-1; ++j){
-	    	xpdRatePath = _MM_LOAD_f64(&pdDiscountFactors[i*BLOCKSIZE],gvl);
-	    	xDdelt = _MM_LOAD_f64(&pdexpRes[j*BLOCKSIZE],gvl);
-	    	xpdRatePath = _MM_MUL_f64(xpdRatePath,xDdelt,gvl);
-	    	_MM_STORE_f64(&pdDiscountFactors[i*BLOCKSIZE],xpdRatePath,gvl);
+	    	xpdRatePath = _MM_LOAD_f32(&pdDiscountFactors[i*BLOCKSIZE],gvl);
+	    	xDdelt = _MM_LOAD_f32(&pdexpRes[j*BLOCKSIZE],gvl);
+	    	xpdRatePath = _MM_MUL_f32(xpdRatePath,xDdelt,gvl);
+	    	_MM_STORE_f32(&pdDiscountFactors[i*BLOCKSIZE],xpdRatePath,gvl);
 	    }
 	} 
 	FENCE();

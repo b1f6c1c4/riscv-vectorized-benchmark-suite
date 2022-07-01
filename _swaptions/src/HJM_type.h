@@ -11,7 +11,7 @@
 #error BASELINE and ENABLE_SSE4 are mutually exclusive
 #endif
 
-#define FTYPE double
+#define FTYPE float
 #define BLOCK_SIZE 64 // Blocking to allow better caching
 #define RANDSEEDVAL 100
 #define DEFAULT_NUM_TRIALS  102400

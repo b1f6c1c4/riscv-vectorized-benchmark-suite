@@ -248,22 +248,22 @@ vint64m1_t vmerge_vvm_i64m1 (vbool64_t mask, vint64m1_t op1, vint64m1_t op2);
 #define _MM_ADD_f32_MASK(op1, op2, op3, op4, op5) vfadd_vv_f32m1_m(op4, op1, op2, op3, op5)
 
 //#define _MM_DIV_f64     	__builtin_epi_vfdiv_1xf64
-#define _MM_DIV_f64(op1, op2, op3) vfdiv_vv_f64m1(op1, op2, op3)
+#define _MM_DIV_f64(op1, op2, op3) vfmul_vv_f64m1(op1, vfrec7_v_f64m1(op2, op3), op3)
 
 //#define _MM_DIV_f32     	__builtin_epi_vfdiv_2xf32
-#define _MM_DIV_f32(op1, op2, op3) vfdiv_vv_f32m1(op1, op2, op3)
+#define _MM_DIV_f32(op1, op2, op3) vfmul_vv_f32m1(op1, vfrec7_v_f32m1(op2, op3), op3)
 
 //#define _MM_DIV_2xf64		__builtin_epi_vfdiv_2xf64
-#define _MM_DIV_2xf64(op1, op2, op3)  vfdiv_vv_f64m2(op1, op2, op3)
+#define _MM_DIV_2xf64(op1, op2, op3)  vfmul_vv_f64m2(op1, vfrec7_v_f64m2(op2, op3), op3)
 
 //#define _MM_DIV_4xf32     	__builtin_epi_vfdiv_4xf32
-#define _MM_DIV_4xf32(op1, op2, op3)  vfdiv_vv_f32m2(op1, op2, op3)
+#define _MM_DIV_4xf32(op1, op2, op3)  vfmul_vv_f32m2(op1, vfrec7_v_f32m2(op2, op3), op3)
 
 //#define _MM_SQRT_f64    	__builtin_epi_vfsqrt_1xf64 
-#define _MM_SQRT_f64(op1, op2) vfsqrt_v_f64m1(op1, op2)
+#define _MM_SQRT_f64(op1, op2) vfrec7_v_f64m1(vfrsqrt7_v_f64m1(op1, op2), op2)
 
 //#define _MM_SQRT_f32    	__builtin_epi_vfsqrt_2xf32
-#define _MM_SQRT_f32(op1, op2) vfsqrt_v_f32m1(op1, op2) 
+#define _MM_SQRT_f32(op1, op2) vfrec7_v_f32m1(vfrsqrt7_v_f32m1(op1, op2), op2)
 
 //#define _MM_SET_f64     	__builtin_epi_vbroadcast_1xf64 
 #define _MM_SET_f64(op1, op2) vfmv_v_f_f64m1(op1, op2)

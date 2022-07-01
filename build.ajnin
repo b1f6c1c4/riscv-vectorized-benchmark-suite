@@ -31,15 +31,18 @@ rule cxx cc &cflags+=' -include stdint.h '
 rule cxx cc &cflags+=' -w '
 
 foreach d {
-    (_$d/bin/$d_serial.exe) --spike&workdir="_$d/bin/"&args=$d0-- (_$d/bin/$d_serial.report)
+
+    rule spike gem5 &workdir="_$d/bin/" &args=$d0
+    (_$d/bin/$d_serial.exe) --spike-- (_$d/bin/$d_serial.report)
         >> ($d.serial) also[>> ($d)] >> (serial) >> (all)
-    (_$d/bin/$d_vector.exe) --spike&workdir="_$d/bin/"&args=$d0-- (_$d/bin/$d_vector.report)
+    (_$d/bin/$d_vector.exe) --spike-- (_$d/bin/$d_vector.report)
         >> ($d.vector) also[>> ($d)] >> (vector) >> (all)
-    (_$d/bin/$d_gem5.exe) --gem5&workdir="_$d/bin/"&args=$d0-- (_$d/bin/$d_gem5.report)
+    (_$d/bin/$d_gem5.exe) --gem5-- (_$d/bin/$d_gem5.report)
         >> ($d.gem5) also[>> ($d)] >> (gem5) >> (all)
+
     foreach s {
         rule cxx cc ld &genre=$s0
-        (_$d/bin/$d_$s.exe) --dump-- (_$d/bin/$d_$s.dump) also[>> (compile) !] >> ($d)
+        (_$d/bin/$d_$s.exe) --dump-- (_$d/bin/$d_$s.dump) also[>> (compile) !] >> ($d) >> (all)
         foreach list f := _$d/src/$$.h {{
             rule cxx cc |= (_$d/src/$f.h)
         }}
